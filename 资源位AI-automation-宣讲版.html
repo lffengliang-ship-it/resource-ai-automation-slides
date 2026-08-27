@@ -166,6 +166,14 @@
           break-after: auto;
           page-break-after: auto;
         }
+        [data-anim] {
+          opacity: 1 !important;
+          transform: none !important;
+          animation: none !important;
+        }
+        .slide * {
+          animation-delay: 0s !important;
+        }
         .deck-controls,
         #notesPanel,
         #editDock,
@@ -511,7 +519,7 @@
         height: 100%;
       }
       .cover-layout.editorial {
-        align-items: center;
+        align-items: start;
       }
       .cover-left {
         display: flex;
@@ -530,17 +538,17 @@
         display: flex;
         flex-direction: column;
         justify-content: center;
-        gap: 24px;
+        gap: 20px;
         padding-bottom: 0;
-        padding-top: 8px;
+        padding-top: 12px;
         max-width: 920px;
-        transform: translateY(-44px);
+        transform: translateY(-18px);
       }
       .cover-deckline {
-        font-size: 21px;
-        line-height: 1.45;
+        font-size: 20px;
+        line-height: 1.4;
         color: var(--slide-muted);
-        max-width: 760px;
+        max-width: 720px;
       }
       .cover-tags {
         display: flex;
@@ -592,14 +600,14 @@
       }
       .cover-caption {
         border-top: 1px solid rgba(240, 236, 229, 0.12);
-        padding-top: 16px;
+        padding-top: 12px;
         display: grid;
         grid-template-columns: 1.2fr 0.8fr;
         gap: 18px;
         align-items: center;
       }
       .cover-caption .big-line {
-        font-size: 22px;
+        font-size: 20px;
       }
       .cover-meta {
         display: flex;
@@ -3158,21 +3166,21 @@
       }
 
       .slide--cover .display {
-        font-size: 66px;
-        line-height: 0.98;
+        font-size: 62px;
+        line-height: 0.96;
       }
 
       .cover-deckline {
-        font-size: 24px;
+        font-size: 20px;
       }
 
       .cover-meta .meta-value {
-        font-size: 18px;
+        font-size: 17px;
       }
 
       .cover-caption .big-line,
       .cover-caption .muted {
-        font-size: 21px !important;
+        font-size: 20px !important;
       }
 
       .history-card .caption .title {
