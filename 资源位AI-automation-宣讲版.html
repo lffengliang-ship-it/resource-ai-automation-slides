@@ -1,0 +1,4352 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>用 AI 做 Coding，我把重复劳动交出去了</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700;800;900&family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700;900&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --stage-bg: #111111;
+        --c-bg: #111111;
+        --c-bg-alt: #171715;
+        --c-bg-orange: #d7c1ab;
+        --c-ink: #f0ece5;
+        --c-ink-muted: #a69f95;
+        --c-ink-hint: #6b645a;
+        --c-ink-soft: rgba(240, 236, 229, 0.7);
+        --c-orange: #936244;
+        --c-line: #282826;
+        --c-line-soft: rgba(240, 236, 229, 0.12);
+        --c-ink-on-orange: #111111;
+        --c-ink-on-orange-muted: rgba(17, 17, 17, 0.72);
+        --c-ink-on-orange-hint: rgba(17, 17, 17, 0.52);
+
+        --f-display: "Barlow", "Noto Sans SC", sans-serif;
+        --f-body: "Barlow", "Noto Sans SC", sans-serif;
+        --f-mono: "IBM Plex Mono", monospace;
+
+        --pad-x: 108px;
+        --pad-y: 84px;
+        --gap-xl: 56px;
+        --gap-lg: 34px;
+        --gap-md: 22px;
+        --gap-sm: 12px;
+
+        --sz-display: 88px;
+        --sz-h1: 62px;
+        --sz-h2: 46px;
+        --sz-h3: 28px;
+        --sz-lead: 23px;
+        --sz-body: 19px;
+        --sz-caption: 14px;
+        --sz-label: 14px;
+        --sz-stat: 60px;
+        --sz-stat-small: 34px;
+
+        --ease-slide: cubic-bezier(0.77, 0, 0.175, 1);
+        --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+        --dur-slide: 0.72s;
+        --dur-enter: 0.5s;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        overflow: hidden;
+        background: var(--stage-bg);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: geometricPrecision;
+      }
+      body {
+        font-family: var(--f-body);
+        color: var(--c-ink);
+      }
+
+      /* ===========================================
+         FIXED 16:9 STAGE: MANDATORY BASE STYLES
+         =========================================== */
+      .deck-viewport {
+        position: fixed;
+        inset: 0;
+        overflow: hidden;
+        background: var(--stage-bg);
+      }
+      .deck-stage {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        transform-origin: 0 0;
+        background: var(--c-bg);
+      }
+      .slide {
+        position: absolute;
+        inset: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        display: block;
+        visibility: hidden;
+        opacity: 0;
+        pointer-events: none;
+        background: var(--c-bg);
+        transition:
+          opacity var(--dur-slide) var(--ease-slide),
+          visibility 0s linear var(--dur-slide);
+      }
+      .slide.active,
+      .slide.visible {
+        visibility: visible;
+        opacity: 1;
+        pointer-events: auto;
+        z-index: 1;
+        transition:
+          opacity var(--dur-slide) var(--ease-slide),
+          visibility 0s;
+      }
+      img,
+      video,
+      canvas,
+      svg {
+        max-width: 100%;
+        max-height: 100%;
+      }
+      .deck-controls {
+        position: fixed;
+        left: 50%;
+        bottom: 22px;
+        transform: translateX(-50%);
+        z-index: 1000;
+      }
+      @media print {
+        html,
+        body {
+          width: 1920px;
+          height: auto;
+          overflow: visible;
+          background: #fff;
+        }
+        .deck-viewport {
+          position: static;
+          overflow: visible;
+          background: #fff;
+        }
+        .deck-stage {
+          position: static;
+          width: auto;
+          height: auto;
+          transform: none !important;
+          background: none;
+        }
+        .slide {
+          position: relative;
+          display: block !important;
+          visibility: visible !important;
+          opacity: 1 !important;
+          pointer-events: auto !important;
+          width: 1920px;
+          height: 1080px;
+          break-after: page;
+          page-break-after: always;
+        }
+        .slide:last-child {
+          break-after: auto;
+          page-break-after: auto;
+        }
+        .deck-controls,
+        #notesPanel,
+        #editDock,
+        #editHotzone {
+          display: none !important;
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          transition-duration: 0.2s !important;
+          scroll-behavior: auto !important;
+        }
+      }
+
+      /* ===========================================
+         BROADSIDE SYSTEM
+         =========================================== */
+      .slide {
+        background:
+          radial-gradient(circle at 18% 18%, rgba(147, 98, 68, 0.08), transparent 26%),
+          radial-gradient(circle at 86% 18%, rgba(147, 98, 68, 0.06), transparent 22%),
+          var(--c-bg);
+      }
+      .slide.dark {
+        --slide-bg: var(--c-bg);
+        --slide-text: var(--c-ink);
+        --slide-muted: var(--c-ink-muted);
+        --slide-hint: var(--c-ink-hint);
+        --slide-line: var(--c-line);
+        --slide-accent: var(--c-orange);
+        background:
+          radial-gradient(circle at 16% 16%, rgba(147, 98, 68, 0.1), transparent 24%),
+          radial-gradient(circle at 84% 18%, rgba(147, 98, 68, 0.06), transparent 18%),
+          linear-gradient(180deg, #121211 0%, #111111 100%);
+        color: var(--c-ink);
+      }
+      .slide.orange {
+        --slide-bg: var(--c-bg-orange);
+        --slide-text: var(--c-ink-on-orange);
+        --slide-muted: var(--c-ink-on-orange-muted);
+        --slide-hint: var(--c-ink-on-orange-hint);
+        --slide-line: rgba(17, 17, 17, 0.18);
+        --slide-accent: var(--c-ink-on-orange);
+        background:
+          radial-gradient(circle at 14% 18%, rgba(17, 17, 17, 0.06), transparent 24%),
+          radial-gradient(circle at 84% 12%, rgba(17, 17, 17, 0.05), transparent 16%),
+          var(--c-bg-orange);
+        color: var(--c-ink-on-orange);
+      }
+
+      .slide-shell {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        padding: var(--pad-y) var(--pad-x);
+      }
+      .slide-shell.grid {
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+      }
+      .slide-shell.center {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .chrome,
+      .foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+        font-family: var(--f-mono);
+        font-size: var(--sz-label);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .chrome {
+        padding-bottom: var(--gap-sm);
+        border-bottom: 1px solid var(--slide-line);
+      }
+      .foot {
+        padding-top: var(--gap-sm);
+        border-top: 1px solid var(--slide-line);
+      }
+      .slide.orange .chrome,
+      .slide.orange .foot {
+        border-color: rgba(17, 17, 17, 0.18);
+      }
+      .slide--cover .chrome,
+      .slide--cover .foot,
+      .slide--chapter .chrome,
+      .slide--chapter .foot,
+      .slide--end .chrome,
+      .slide--end .foot {
+        display: none;
+      }
+
+      .label {
+        font-family: var(--f-mono);
+        font-size: var(--sz-label);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .kicker {
+        font-family: var(--f-mono);
+        font-size: var(--sz-label);
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-accent);
+      }
+      .muted {
+        color: var(--slide-muted);
+      }
+      .hint {
+        color: var(--slide-hint);
+      }
+      .accent {
+        color: var(--c-orange);
+      }
+      .slide.orange .accent {
+        color: var(--c-ink-on-orange);
+      }
+
+      .display {
+        font-family: var(--f-display);
+        font-size: var(--sz-display);
+        font-weight: 900;
+        line-height: 0.92;
+        letter-spacing: 0;
+        text-transform: lowercase;
+        margin: 0;
+      }
+      .h1 {
+        font-family: var(--f-display);
+        font-size: var(--sz-h1);
+        font-weight: 900;
+        line-height: 0.96;
+        letter-spacing: 0;
+        margin: 0;
+      }
+      .h2 {
+        font-family: var(--f-display);
+        font-size: var(--sz-h2);
+        font-weight: 800;
+        line-height: 1.02;
+        letter-spacing: 0;
+        margin: 0;
+      }
+      .h3 {
+        font-family: var(--f-display);
+        font-size: var(--sz-h3);
+        font-weight: 700;
+        line-height: 1.08;
+        letter-spacing: 0;
+        margin: 0;
+      }
+      .lead {
+        font-size: var(--sz-lead);
+        line-height: 1.45;
+        margin: 0;
+      }
+      .body {
+        font-size: var(--sz-body);
+        line-height: 1.6;
+        margin: 0;
+      }
+      .caption {
+        font-size: var(--sz-caption);
+        line-height: 1.45;
+        margin: 0;
+      }
+      .slide.orange .display,
+      .slide.orange .h1,
+      .slide.orange .h2,
+      .slide.orange .h3 {
+        color: var(--c-ink-on-orange);
+      }
+      .slide.orange .lead,
+      .slide.orange .body,
+      .slide.orange .caption,
+      .slide.orange .kicker,
+      .slide.orange .label,
+      .slide.orange .muted,
+      .slide.orange .hint {
+        color: inherit;
+      }
+
+      .rule {
+        width: 42px;
+        height: 2px;
+        background: var(--c-orange);
+      }
+      .slide.orange .rule {
+        background: var(--c-ink-on-orange);
+      }
+      .rule-full {
+        width: 100%;
+        height: 1px;
+        background: var(--slide-line);
+      }
+      .stack {
+        display: flex;
+        flex-direction: column;
+        gap: var(--gap-lg);
+      }
+      .row {
+        display: flex;
+        gap: var(--gap-lg);
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--gap-lg);
+        align-items: start;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: var(--gap-lg);
+      }
+      .grid-4 {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+      }
+      .panel {
+        position: relative;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        min-width: 0;
+      }
+      .panel.compact {
+        padding-top: 18px;
+      }
+      .panel.inset {
+        padding: 26px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid var(--slide-line);
+      }
+      .slide.orange .panel.inset {
+        background: rgba(17, 17, 17, 0.03);
+        border-color: rgba(17, 17, 17, 0.12);
+      }
+      .panel-title {
+        font-family: var(--f-mono);
+        font-size: var(--sz-label);
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+      }
+      .big-line {
+        font-size: 24px;
+        line-height: 1.35;
+        margin: 0;
+      }
+      .mono {
+        font-family: var(--f-mono);
+      }
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 10px 14px;
+        border: 1px solid var(--slide-line);
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: inherit;
+      }
+      .slide.orange .chip {
+        border-color: rgba(17, 17, 17, 0.18);
+      }
+      .chip.orange {
+        background: var(--c-orange);
+        color: #111111;
+        border-color: var(--c-orange);
+      }
+      .slide.orange .chip.orange {
+        background: #111111;
+        color: var(--c-bg-orange);
+        border-color: #111111;
+      }
+
+      .v-label {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .slide.orange .v-label {
+        color: rgba(17, 17, 17, 0.56);
+      }
+
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 18px;
+      }
+      .stat {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 20px;
+        min-height: 190px;
+      }
+      .stat .num {
+        font-size: var(--sz-stat);
+        font-weight: 900;
+        line-height: 0.95;
+        letter-spacing: 0;
+        margin-bottom: 12px;
+      }
+      .stat .num.small {
+        font-size: var(--sz-stat-small);
+      }
+      .stat .desc {
+        font-size: 18px;
+        line-height: 1.3;
+        margin: 0 0 10px;
+      }
+      .stat .footnote {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+
+      .cover-layout {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 40px;
+        align-items: end;
+        height: 100%;
+      }
+      .cover-layout.editorial {
+        align-items: center;
+      }
+      .cover-left {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: var(--gap-lg);
+        max-width: 900px;
+      }
+      .cover-right {
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-bottom: 72px;
+      }
+      .cover-copy {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 24px;
+        padding-bottom: 0;
+        padding-top: 8px;
+        max-width: 920px;
+        transform: translateY(-44px);
+      }
+      .cover-deckline {
+        font-size: 21px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 760px;
+      }
+      .cover-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .cover-visual {
+        display: grid;
+        grid-template-rows: 1fr 0.58fr;
+        gap: 18px;
+        align-items: stretch;
+        padding-top: 0;
+      }
+      .slide--cover .display {
+        font-size: 66px;
+        line-height: 0.94;
+        max-width: 860px;
+      }
+      .photo-frame {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid rgba(240, 236, 229, 0.14);
+        background: #121211;
+      }
+      .photo-frame.tall {
+        min-height: 560px;
+      }
+      .photo-frame.lower {
+        min-height: 250px;
+      }
+      .photo-frame img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: grayscale(1) contrast(1.08) brightness(0.94);
+      }
+      .photo-label {
+        position: absolute;
+        left: 16px;
+        bottom: 16px;
+        padding: 8px 12px;
+        background: rgba(15, 15, 15, 0.72);
+        color: #f4efe7;
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .cover-caption {
+        border-top: 1px solid rgba(240, 236, 229, 0.12);
+        padding-top: 16px;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        align-items: center;
+      }
+      .cover-caption .big-line {
+        font-size: 22px;
+      }
+      .cover-meta {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 28px;
+        padding-top: 20px;
+        border-top: 1px solid rgba(17, 17, 17, 0.18);
+      }
+      .slide--cover .cover-meta {
+        border-top-color: rgba(240, 236, 229, 0.12);
+      }
+      .cover-meta .meta-block {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .cover-meta .meta-title {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .cover-meta .meta-value {
+        font-size: 16px;
+      }
+      .slide--cover .cover-meta .meta-title,
+      .slide--cover .cover-meta .meta-value {
+        color: var(--c-ink);
+      }
+      .step-stack {
+        position: relative;
+        width: 360px;
+        height: 540px;
+      }
+      .step-card {
+        position: absolute;
+        right: 0;
+        width: 300px;
+        height: 78px;
+        border: 1px solid rgba(17, 17, 17, 0.18);
+        background: rgba(17, 17, 17, 0.04);
+        display: grid;
+        grid-template-columns: 64px 1fr;
+        align-items: center;
+        padding: 0 22px 0 0;
+      }
+      .step-card:nth-child(1) {
+        top: 0;
+      }
+      .step-card:nth-child(2) {
+        top: 96px;
+        right: 42px;
+      }
+      .step-card:nth-child(3) {
+        top: 192px;
+        right: 84px;
+      }
+      .step-card:nth-child(4) {
+        top: 288px;
+        right: 126px;
+      }
+      .step-card:nth-child(5) {
+        top: 384px;
+        right: 168px;
+      }
+      .step-index {
+        display: grid;
+        place-items: center;
+        width: 100%;
+        height: 100%;
+        font-family: var(--f-mono);
+        font-size: 16px;
+        letter-spacing: 0.12em;
+        border-right: 1px solid rgba(17, 17, 17, 0.16);
+      }
+      .step-text {
+        font-size: 18px;
+        line-height: 1.1;
+        padding-left: 18px;
+      }
+      .step-card::before {
+        content: "";
+        position: absolute;
+        left: -28px;
+        top: 50%;
+        width: 28px;
+        height: 1px;
+        background: rgba(17, 17, 17, 0.22);
+      }
+
+      .era-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .era {
+        min-height: 300px;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        position: relative;
+      }
+      .era .badge {
+        width: 56px;
+        height: 56px;
+        border: 1px solid var(--slide-line);
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 14px;
+        margin-bottom: 28px;
+      }
+      .era .title {
+        font-size: 34px;
+        line-height: 1;
+        margin-bottom: 14px;
+      }
+      .era .copy {
+        font-size: 20px;
+        line-height: 1.35;
+        color: var(--slide-muted);
+      }
+      .era .tag {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        padding: 10px 16px;
+        border: 1px solid var(--slide-line);
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+
+      .split-visual {
+        display: grid;
+        grid-template-columns: 0.98fr 1.02fr;
+        gap: 36px;
+        align-items: stretch;
+      }
+      .history-layout {
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 34px;
+        align-items: stretch;
+      }
+      .history-stack {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: 1.08fr 0.82fr;
+        gap: 16px;
+        min-height: 640px;
+      }
+      .history-card--hero {
+        grid-column: 1 / -1;
+      }
+      .history-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--slide-line);
+        background: #141312;
+      }
+      .history-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: grayscale(1) contrast(1.06) brightness(0.95);
+      }
+      .history-card .caption {
+        position: absolute;
+        left: 16px;
+        right: 16px;
+        bottom: 16px;
+        padding-top: 68px;
+        background: linear-gradient(180deg, rgba(12, 12, 12, 0), rgba(12, 12, 12, 0.75));
+      }
+      .history-card .caption .title {
+        font-size: 18px;
+        line-height: 1.08;
+        margin-bottom: 10px;
+      }
+      .history-card .caption .note {
+        font-size: 13px;
+        line-height: 1.4;
+        color: rgba(240, 236, 229, 0.72);
+      }
+      .history-card .meta {
+        position: absolute;
+        left: 18px;
+        top: 18px;
+        padding: 8px 12px;
+        background: rgba(17, 17, 17, 0.72);
+        color: #f0ece5;
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .history-aside {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .history-card--excel {
+        min-height: 396px;
+      }
+      .history-summary {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .history-summary .panel-title {
+        margin-bottom: 0;
+      }
+      .history-summary .summary-copy {
+        font-size: 28px;
+        line-height: 1.32;
+        margin: 0;
+        max-width: 780px;
+      }
+      .history-summary .summary-copy .accent {
+        color: var(--c-orange);
+      }
+      .history-summary .summary-note {
+        font-size: 16px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 720px;
+      }
+      .timeline-bridge {
+        display: none;
+      }
+      .lane {
+        display: grid;
+        grid-template-columns: 1fr auto 1fr;
+        gap: 14px;
+        align-items: stretch;
+      }
+      .lane .mini {
+        min-height: 142px;
+        border: 1px solid var(--slide-line);
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.02);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .lane .mini .idx {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .lane .mini .title {
+        font-size: 24px;
+        line-height: 1.05;
+      }
+      .lane .mini .note {
+        font-size: 15px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .lane .arrow {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 15px;
+        color: var(--slide-muted);
+      }
+      .lane-label {
+        display: inline-block;
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        margin-top: 2px;
+        padding-top: 2px;
+      }
+      .lane .mini.media {
+        padding: 0;
+        overflow: hidden;
+      }
+      .lane .mini-photo {
+        position: relative;
+        min-height: 118px;
+        border-bottom: 1px solid var(--slide-line);
+        background: #121211;
+      }
+      .lane .mini-photo img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+        filter: grayscale(1) contrast(1.08) brightness(0.95);
+      }
+      .lane .mini-photo-label {
+        position: absolute;
+        left: 12px;
+        bottom: 12px;
+        padding: 7px 10px;
+        background: rgba(15, 15, 15, 0.72);
+        color: #f4efe7;
+        font-family: var(--f-mono);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .lane .mini-copy {
+        padding: 16px 18px 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .flow-card {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+      }
+      .resource-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 18px;
+        align-items: start;
+      }
+      .resource-intro {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+      .resource-flow.clean {
+        margin-top: 6px;
+        gap: 10px;
+      }
+      .resource-flow.clean .resource-step {
+        grid-template-columns: 76px minmax(0, 1fr) 150px;
+        padding: 16px 18px;
+        align-items: center;
+      }
+      .resource-flow.clean .resource-step .idx {
+        padding-top: 0;
+        font-size: 13px;
+      }
+      .resource-flow.clean .resource-step .name {
+        font-size: 22px;
+      }
+      .resource-flow.clean .resource-step .desc {
+        max-width: none;
+        margin-top: 6px;
+        font-size: 13px;
+      }
+      .resource-flow.clean .resource-step .flag {
+        text-align: right;
+        font-size: 12px;
+      }
+      .resource-flow.clean .resource-arrow {
+        font-size: 20px;
+        padding: 2px 0;
+      }
+      .resource-caption {
+        margin-top: 4px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .flow-board.resource .flow-stage.top,
+      .flow-board.resource .flow-stage.bottom {
+        grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr) 36px minmax(0, 1fr);
+      }
+      .flow-board.resource .flow-node {
+        min-height: 108px;
+      }
+      .flow-board.resource .flow-node.highlight {
+        min-height: 118px;
+      }
+      .flow-board.resource .flow-node .name {
+        font-size: 20px;
+      }
+      .flow-board.resource .flow-link {
+        font-size: 20px;
+      }
+      .flow-board.resource .flow-drop {
+        font-size: 18px;
+      }
+      .resource-tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .flow-board {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .flow-stage {
+        display: grid;
+        gap: 10px;
+        align-items: stretch;
+      }
+      .flow-stage.top {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .flow-stage.bottom {
+        grid-template-columns: 1.12fr auto 1fr auto 0.92fr;
+      }
+      .flow-node {
+        min-height: 86px;
+        border: 1px solid var(--slide-line);
+        padding: 12px 12px 10px;
+        background: rgba(255, 255, 255, 0.035);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .flow-node.highlight {
+        min-height: 108px;
+        background: rgba(255, 255, 255, 0.055);
+        border-color: rgba(240, 236, 229, 0.24);
+      }
+      .flow-node .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .flow-node .name {
+        font-size: 16px;
+        line-height: 1.12;
+      }
+      .flow-node .copy {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .flow-link {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 16px;
+        color: var(--slide-muted);
+      }
+      .flow-drop {
+        display: flex;
+        justify-content: center;
+        font-family: var(--f-mono);
+        font-size: 16px;
+        letter-spacing: 0.16em;
+        color: var(--slide-muted);
+      }
+      .point-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 2px;
+      }
+      .point-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 10px;
+        border: 1px solid rgba(240, 236, 229, 0.14);
+        background: rgba(255, 255, 255, 0.03);
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--c-ink);
+      }
+      .flow-caption {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .resource-flowchart {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .flow-row {
+        display: grid;
+        grid-template-columns: 1fr auto 1.2fr auto 1fr auto 1fr;
+        gap: 8px;
+        align-items: stretch;
+      }
+      .flow-row.compact {
+        grid-template-columns: 1.2fr auto 1.2fr auto 1fr;
+      }
+      .resource-node {
+        min-height: 88px;
+        border: 1px solid var(--slide-line);
+        padding: 12px 12px 10px;
+        background: rgba(255, 255, 255, 0.03);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .resource-node .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .resource-node .name {
+        font-size: 16px;
+        line-height: 1.12;
+      }
+      .resource-node .copy {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .resource-arrow {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 16px;
+        color: var(--slide-muted);
+      }
+      .flow-return-band {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      .return-card {
+        border: 1px dashed var(--slide-line);
+        padding: 12px 14px;
+        min-height: 78px;
+        background: rgba(255, 255, 255, 0.015);
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .return-card .head {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .return-card .body {
+        font-size: 14px;
+        line-height: 1.4;
+      }
+      .resource-quote {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        padding-top: 4px;
+      }
+      .point-cluster {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .point-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        gap: 12px;
+      }
+      .point-head .title {
+        font-size: 24px;
+        line-height: 1.05;
+      }
+      .point-head .sub {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .point-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .point-card {
+        min-height: 92px;
+        border: 1px solid var(--slide-line);
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .point-card .tag {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .point-card .name {
+        font-size: 16px;
+        line-height: 1.06;
+      }
+      .point-card .copy {
+        font-size: 11px;
+        line-height: 1.35;
+        color: var(--slide-muted);
+      }
+      .point-note {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 12px;
+        font-size: 14px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .feature-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .feature-row {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 12px;
+        padding: 14px 0;
+        border-top: 1px solid var(--slide-line);
+      }
+      .feature-row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .feature-kicker {
+        font-family: var(--f-mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+        padding-top: 2px;
+      }
+      .feature-text {
+        font-size: 18px;
+        line-height: 1.1;
+        margin-bottom: 6px;
+      }
+      .feature-note {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .slide[data-title="资源位是什么"] .flow-node,
+      .slide[data-title="资源位是什么"] .point-chip,
+      .slide[data-title="资源位是什么"] .feature-row {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(240, 236, 229, 0.18);
+      }
+      .slide[data-title="资源位是什么"] .flow-node .idx,
+      .slide[data-title="资源位是什么"] .flow-node .copy,
+      .slide[data-title="资源位是什么"] .flow-link,
+      .slide[data-title="资源位是什么"] .flow-drop,
+      .slide[data-title="资源位是什么"] .feature-kicker,
+      .slide[data-title="资源位是什么"] .feature-sub {
+        color: rgba(240, 236, 229, 0.72);
+      }
+      .slide[data-title="资源位是什么"] .flow-node .name,
+      .slide[data-title="资源位是什么"] .flow-caption,
+      .slide[data-title="资源位是什么"] .feature-text,
+      .slide[data-title="资源位是什么"] .feature-note,
+      .slide[data-title="资源位是什么"] .resource-quote {
+        color: var(--c-ink);
+      }
+      .resource-flow {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 24px;
+      }
+      .resource-step {
+        display: grid;
+        grid-template-columns: 66px 1.1fr auto;
+        gap: 12px;
+        align-items: stretch;
+        border: 1px solid var(--slide-line);
+        padding: 16px 18px;
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .resource-step .idx {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        padding-top: 4px;
+      }
+      .resource-step .name {
+        font-size: 20px;
+        line-height: 1.1;
+      }
+      .resource-step .desc {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+        max-width: 420px;
+      }
+      .resource-step .flag {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        align-self: center;
+      }
+      .resource-visuals {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .shot-grid {
+        display: grid;
+        grid-template-columns: 1.08fr 0.92fr;
+        grid-template-rows: 1fr 0.86fr;
+        gap: 12px;
+        min-height: 580px;
+      }
+      .shot-card {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--slide-line);
+        background: #141312;
+        min-height: 0;
+      }
+      .shot-card.large {
+        grid-row: span 2;
+      }
+      .shot-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+      }
+      .shot-card .tag {
+        position: absolute;
+        left: 14px;
+        bottom: 14px;
+        padding: 8px 11px;
+        background: rgba(17, 17, 17, 0.76);
+        color: #f4efe7;
+        font-family: var(--f-mono);
+        font-size: 12px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+      }
+      .shot-note {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 14px;
+        font-size: 18px;
+        line-height: 1.32;
+        color: var(--slide-muted);
+      }
+      .solution-layout {
+        display: grid;
+        grid-template-columns: 0.92fr 1.08fr;
+        gap: 30px;
+        align-items: stretch;
+      }
+      .solution-copy {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+      }
+      .solution-claim {
+        font-size: 52px;
+        line-height: 0.96;
+        margin-top: 14px;
+        max-width: 760px;
+      }
+      .solution-sub {
+        margin-top: 16px;
+        font-size: 20px;
+        line-height: 1.42;
+        color: var(--slide-muted);
+        max-width: 700px;
+      }
+      .solution-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 20px;
+      }
+      .solution-table {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .solution-visual {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        min-width: 0;
+      }
+      .solution-shot {
+        position: relative;
+        overflow: hidden;
+        border: 1px solid var(--slide-line);
+        background: #111111;
+        min-height: 520px;
+      }
+      .solution-shot img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center center;
+        display: block;
+      }
+      .solution-shot .overlay {
+        position: absolute;
+        left: 16px;
+        bottom: 16px;
+        right: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .solution-shot .overlay .badge {
+        display: inline-flex;
+        align-self: flex-start;
+        padding: 8px 10px;
+        background: rgba(17, 17, 17, 0.78);
+        color: #f4efe7;
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .solution-shot .overlay .title {
+        max-width: 420px;
+        padding: 12px 14px;
+        background: rgba(17, 17, 17, 0.72);
+        color: #f4efe7;
+        font-size: 18px;
+        line-height: 1.3;
+      }
+      .solution-row {
+        display: grid;
+        grid-template-columns: 0.78fr 1fr 1.12fr 0.82fr 0.78fr;
+        gap: 12px;
+      }
+      .solution-cell {
+        min-height: 86px;
+        border: 1px solid var(--slide-line);
+        padding: 14px 16px;
+        background: rgba(255, 255, 255, 0.02);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        font-size: 20px;
+        line-height: 1.18;
+      }
+      .solution-row.header .solution-cell {
+        min-height: 58px;
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        background: transparent;
+      }
+      .solution-row.highlight .solution-cell {
+        background: rgba(255, 255, 255, 0.05);
+      }
+      .solution-callout {
+        margin-top: 16px;
+        padding-top: 16px;
+        border-top: 1px solid var(--slide-line);
+        font-size: 24px;
+        line-height: 1.3;
+      }
+      .solution-side-note {
+        margin-top: 12px;
+        font-size: 15px;
+        line-height: 1.5;
+        color: var(--slide-muted);
+      }
+      .video-attachment {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .video-launch {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--slide-text);
+        padding: 12px 16px;
+        font-family: var(--f-body);
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .video-launch .ico {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+      }
+      .video-launch:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .video-hint {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .video-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 2200;
+        display: grid;
+        place-items: center;
+        padding: 36px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.22s ease;
+      }
+      .video-modal.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .video-modal__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(6, 6, 6, 0.8);
+      }
+      .video-modal__panel {
+        position: relative;
+        z-index: 1;
+        width: min(1160px, calc(100vw - 72px));
+        background: #121211;
+        border: 1px solid rgba(240, 236, 229, 0.14);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.48);
+        overflow: hidden;
+      }
+      .video-modal__topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(240, 236, 229, 0.1);
+      }
+      .video-modal__title {
+        font-size: 18px;
+        line-height: 1.1;
+      }
+      .video-modal__hint {
+        margin-top: 5px;
+        font-size: 13px;
+        line-height: 1.35;
+        color: var(--slide-muted);
+      }
+      .video-modal__close {
+        width: 36px;
+        height: 36px;
+        border: 1px solid rgba(240, 236, 229, 0.14);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--c-ink);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .video-modal__frame {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background: #000;
+      }
+      .video-modal__empty {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        gap: 14px;
+        padding: 24px;
+        text-align: center;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+        color: var(--c-ink);
+      }
+      .video-modal__empty .copy {
+        max-width: 520px;
+        font-size: 18px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .video-modal__pick {
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--c-ink);
+        padding: 12px 16px;
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .video-modal video {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #000;
+      }
+      .resource-cell.emphasis {
+        background: rgba(255, 255, 255, 0.04);
+      }
+      .resource-note {
+        margin-top: 8px;
+        padding-top: 18px;
+        border-top: 1px solid var(--slide-line);
+        font-size: 22px;
+        line-height: 1.34;
+      }
+      .flow-line {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 14px;
+        align-items: center;
+      }
+      .flow-step {
+        min-height: 132px;
+        border: 1px solid var(--slide-line);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .flow-step .idx {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .flow-step .name {
+        font-size: 24px;
+        line-height: 1.08;
+      }
+      .flow-step .note {
+        font-size: 13px;
+        line-height: 1.35;
+        color: var(--slide-muted);
+      }
+      .flow-arrow {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 18px;
+        color: var(--slide-muted);
+      }
+      .definition {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+      }
+      .definition .body {
+        max-width: 720px;
+        font-size: 26px;
+      }
+      .definition .callout {
+        margin-top: 28px;
+        font-size: 56px;
+        line-height: 0.98;
+        font-weight: 900;
+        max-width: 720px;
+      }
+      .definition .meta {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+      }
+      .definition .meta .chip {
+        justify-content: flex-start;
+      }
+
+      .pain-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 18px;
+      }
+      .pain {
+        min-height: 220px;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+      }
+      .pain .num {
+        font-family: var(--f-mono);
+        font-size: 15px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        margin-bottom: 18px;
+      }
+      .pain .title {
+        font-size: 34px;
+        line-height: 1.08;
+        margin-bottom: 12px;
+      }
+      .pain .body {
+        font-size: 22px;
+        color: var(--slide-muted);
+      }
+      .pain-quote {
+        margin-top: 28px;
+        padding-top: 22px;
+        border-top: 1px solid var(--slide-line);
+        font-size: 28px;
+        line-height: 1.35;
+      }
+
+      .compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+        height: 100%;
+      }
+      .compare .half {
+        position: relative;
+        padding: 40px 42px 38px;
+      }
+      .compare .half.left {
+        background: #121211;
+        color: var(--c-ink);
+        border-right: 1px solid rgba(240, 236, 229, 0.08);
+      }
+      .compare .half.right {
+        background: var(--c-bg-orange);
+        color: #111111;
+      }
+      .compare .half .half-title {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin-bottom: 20px;
+      }
+      .compare .half .main {
+        font-size: 50px;
+        line-height: 0.98;
+        margin-bottom: 22px;
+      }
+      .compare .line-list {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        margin-top: 24px;
+      }
+      .compare .line {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 14px 0;
+        border-top: 1px solid rgba(240, 236, 229, 0.12);
+        font-size: 24px;
+      }
+      .compare .half.right .line {
+        border-top-color: rgba(17, 17, 17, 0.15);
+      }
+      .compare .line .arrow {
+        font-family: var(--f-mono);
+        font-size: 16px;
+        letter-spacing: 0.14em;
+      }
+      .compare .summary {
+        position: absolute;
+        bottom: 38px;
+        left: 42px;
+        right: 42px;
+        padding-top: 18px;
+        border-top: 1px solid rgba(240, 236, 229, 0.12);
+        font-size: 26px;
+        line-height: 1.3;
+      }
+      .compare .half.right .summary {
+        border-top-color: rgba(17, 17, 17, 0.15);
+      }
+      .process-compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr 0.72fr;
+        gap: 18px;
+        align-items: start;
+      }
+      .process-side {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .process-side .head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .process-side .head .label {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .process-side .head .sub {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+        max-width: 220px;
+        text-align: right;
+      }
+      .process-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .process-step {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-top: 1px solid rgba(240, 236, 229, 0.12);
+      }
+      .process-step:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .process-step .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .process-step .title {
+        font-size: 20px;
+        line-height: 1.08;
+      }
+      .process-step .desc {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+        margin-top: 6px;
+      }
+      .process-side.right .process-step {
+        border-top-color: rgba(17, 17, 17, 0.18);
+      }
+      .process-side.right .process-step .idx,
+      .process-side.right .head .label {
+        color: rgba(17, 17, 17, 0.72);
+      }
+      .process-side.right .process-step .title {
+        color: #111111;
+      }
+      .process-side.right .process-step .desc,
+      .process-side.right .head .sub {
+        color: rgba(17, 17, 17, 0.66);
+      }
+      .process-side.right {
+        background: var(--c-bg-orange);
+        color: #111111;
+        padding: 22px 22px 20px;
+        border-top: 0;
+        min-height: 100%;
+      }
+      .process-side.right .process-step {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .impact-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+      }
+      .impact-card {
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 16px 18px 14px;
+        min-height: 112px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .impact-card.big {
+        min-height: 150px;
+      }
+      .impact-card .tag {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .impact-card .metric {
+        font-size: 48px;
+        line-height: 0.95;
+        font-weight: 800;
+      }
+      .impact-card .copy {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .impact-card .mini {
+        font-size: 20px;
+        line-height: 1.08;
+      }
+      .impact-note {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 12px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+
+      .loop {
+        position: relative;
+        height: 520px;
+        border-top: 1px solid var(--slide-line);
+        margin-top: 12px;
+      }
+      .loop-core {
+        position: absolute;
+        left: 50%;
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 1px solid var(--slide-line);
+        display: grid;
+        place-items: center;
+        text-align: center;
+        padding: 26px;
+        font-size: 26px;
+        line-height: 1.15;
+      }
+      .loop-core .mono {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .loop-node {
+        position: absolute;
+        width: 250px;
+        min-height: 132px;
+        padding: 18px 18px 16px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .slide.orange .loop-node {
+        background: rgba(17, 17, 17, 0.02);
+      }
+      .loop-node .idx {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .loop-node .step {
+        font-size: 26px;
+        line-height: 1.08;
+        margin-top: 14px;
+      }
+      .loop-node .desc {
+        margin-top: 10px;
+        font-size: 16px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .loop-node.one {
+        left: 90px;
+        top: 26px;
+      }
+      .loop-node.two {
+        right: 90px;
+        top: 26px;
+      }
+      .loop-node.three {
+        right: 90px;
+        bottom: 26px;
+      }
+      .loop-node.four {
+        left: 90px;
+        bottom: 26px;
+      }
+      .loop-footer {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+        margin-top: 18px;
+      }
+      .pipeline-layout {
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
+      }
+      .pipeline-board {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        display: grid;
+        grid-template-rows: auto auto;
+        gap: 16px;
+      }
+      .pipeline-row {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 14px;
+      }
+      .pipeline-step {
+        position: relative;
+        min-height: 148px;
+        border: 1px solid var(--slide-line);
+        padding: 18px;
+        background: rgba(255, 255, 255, 0.02);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .pipeline-step .idx {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .pipeline-step .step {
+        font-size: 26px;
+        line-height: 1.06;
+        margin-top: 14px;
+      }
+      .pipeline-step .desc {
+        font-size: 15px;
+        line-height: 1.42;
+        color: var(--slide-muted);
+      }
+      .pipeline-step .role {
+        position: absolute;
+        right: 16px;
+        top: 16px;
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .pipeline-note {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .swimlane-board {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .handoff-flow {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .handoff-row {
+        display: grid;
+        grid-template-columns: 168px minmax(0, 1fr) 54px;
+        gap: 16px;
+        align-items: center;
+      }
+      .handoff-lane {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 92px;
+      }
+      .handoff-lane .role {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .handoff-lane .title {
+        font-size: 26px;
+        line-height: 1.04;
+      }
+      .handoff-lane .sub {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 146px;
+      }
+      .handoff-card {
+        min-height: 112px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 16px 18px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .handoff-row.ai .handoff-card {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.2);
+      }
+      .handoff-row.review .handoff-card {
+        background: rgba(255, 255, 255, 0.02);
+        border-style: dashed;
+      }
+      .handoff-card .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .handoff-card .step {
+        margin-top: 12px;
+        font-size: 21px;
+        line-height: 1.08;
+      }
+      .handoff-card .desc {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 560px;
+      }
+      .handoff-arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: var(--slide-muted);
+      }
+      .handoff-arrow .line {
+        width: 1px;
+        height: 28px;
+        background: var(--slide-line);
+      }
+      .handoff-arrow .symbol {
+        font-family: var(--f-mono);
+        font-size: 20px;
+        line-height: 1;
+      }
+      .handoff-arrow .to {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .swimlane-map {
+        position: relative;
+        min-height: 612px;
+        margin-top: 6px;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 18px;
+      }
+      .swimlane-band-bg {
+        position: absolute;
+        top: 58px;
+        bottom: 18px;
+        border: 1px solid rgba(240, 236, 229, 0.08);
+        pointer-events: none;
+      }
+      .swimlane-band-bg.human {
+        left: 0;
+        width: 260px;
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .swimlane-band-bg.ai {
+        left: 330px;
+        right: 0;
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.18);
+      }
+      .swimlane-header {
+        position: absolute;
+        top: 0;
+        width: 260px;
+        padding-top: 14px;
+        border-top: 1px solid var(--slide-line);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .swimlane-header.ai {
+        left: 330px;
+        width: 780px;
+      }
+      .swimlane-header .role {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .swimlane-header .title {
+        font-size: 24px;
+        line-height: 1.04;
+      }
+      .swimlane-header .sub {
+        font-size: 14px;
+        line-height: 1.42;
+        color: var(--slide-muted);
+        max-width: 210px;
+      }
+      .swimlane-header.ai .sub {
+        max-width: 320px;
+      }
+      .swimlane-card {
+        position: absolute;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 14px 16px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 92px;
+        overflow: hidden;
+      }
+      .swimlane-card.ai {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.22);
+      }
+      .swimlane-card.review {
+        background: rgba(255, 255, 255, 0.02);
+        border-style: dashed;
+      }
+      .swimlane-card .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .swimlane-card .step {
+        margin-top: 10px;
+        font-size: 20px;
+        line-height: 1.08;
+      }
+      .swimlane-card .desc {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.44;
+        color: var(--slide-muted);
+      }
+      .swimlane-card.human {
+        left: 0;
+        width: 260px;
+      }
+      .swimlane-card.ai {
+        left: 330px;
+        width: 780px;
+      }
+      .swimlane-links {
+        position: absolute;
+        inset: 58px 0 18px 0;
+        width: 100%;
+        height: calc(100% - 76px);
+        pointer-events: none;
+      }
+      .swimlane-links path {
+        fill: none;
+        stroke: rgba(240, 236, 229, 0.5);
+        stroke-width: 2.2;
+      }
+      .swimlane-links path.review {
+        stroke-dasharray: 7 6;
+        stroke: rgba(240, 236, 229, 0.34);
+      }
+      .swimlane-links path.ai {
+        stroke: rgba(147, 98, 68, 0.7);
+      }
+      .swimlane-links .label {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        fill: rgba(240, 236, 229, 0.7);
+      }
+      .swimlane-band {
+        display: grid;
+        grid-template-columns: 176px minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+        padding-top: 14px;
+      }
+      .swimlane-tag {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 116px;
+      }
+      .swimlane-tag .role {
+        font-family: var(--f-mono);
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .swimlane-tag .title {
+        font-size: 28px;
+        line-height: 1.04;
+      }
+      .swimlane-tag .sub {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 144px;
+      }
+      .swimlane-branch {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-top: 1px;
+      }
+      .swimlane-track {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+      }
+      .swimlane-v2 {
+        display: grid;
+        grid-template-columns: 300px 86px minmax(0, 880px) 96px;
+        grid-template-areas:
+          "humanhead . aihead aihead"
+          "body body body body"
+          "foot foot foot foot";
+        gap: 18px 18px;
+        align-items: start;
+        margin-top: 6px;
+      }
+      .swimlane-v2-head {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 120px;
+      }
+      .swimlane-v2-head.human {
+        grid-area: humanhead;
+      }
+      .swimlane-v2-head.ai {
+        grid-area: aihead;
+      }
+      .swimlane-v2-head .role {
+        font-family: var(--f-mono);
+        font-size: 34px;
+        line-height: 0.96;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .swimlane-v2-head .title {
+        font-size: 16px;
+        line-height: 1.15;
+        font-weight: 600;
+        color: var(--slide-text);
+      }
+      .swimlane-v2-head .sub {
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+        max-width: 300px;
+      }
+      .swimlane-v2-head.ai .sub {
+        max-width: 380px;
+      }
+      .swimlane-v2-body {
+        grid-area: body;
+        display: grid;
+        grid-template-columns: 300px 86px minmax(0, 880px) 96px;
+        grid-template-rows: repeat(4, auto);
+        gap: 14px 18px;
+        align-items: center;
+      }
+      .swimlane-v2-card {
+        min-height: 112px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 18px 18px 16px;
+        display: grid;
+        grid-template-columns: 46px minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        gap: 3px 12px;
+        align-items: start;
+      }
+      .swimlane-v2-card.human {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .swimlane-v2-card.ai {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.2);
+      }
+      .swimlane-v2-card.review {
+        border-style: dashed;
+      }
+      .swimlane-v2-card .idx {
+        grid-row: 1 / span 2;
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        padding-top: 2px;
+      }
+      .swimlane-v2-card .step {
+        font-size: 22px;
+        line-height: 1.1;
+      }
+      .swimlane-v2-card .desc {
+        font-size: 14px;
+        line-height: 1.38;
+        color: var(--slide-muted);
+      }
+      .swimlane-v2-connector {
+        display: grid;
+        place-items: center;
+        color: var(--slide-muted);
+        font-family: var(--f-mono);
+        font-size: 44px;
+        line-height: 1;
+        min-height: 108px;
+      }
+      .swimlane-v2-connector::before {
+        content: "";
+        position: absolute;
+        width: 92px;
+        height: 1px;
+        background: var(--slide-line);
+        opacity: 0.9;
+      }
+      .swimlane-v2-connector {
+        position: relative;
+      }
+      .swimlane-v2-connector span {
+        position: relative;
+        z-index: 1;
+        padding: 0 8px;
+        background: var(--c-bg);
+      }
+      .swimlane-v2-connector.down {
+        color: rgba(240, 236, 229, 0.72);
+      }
+      .swimlane-v2-connector.down::before {
+        width: 1px;
+        height: 92px;
+      }
+      .swimlane-v2-connector.end {
+        color: rgba(240, 236, 229, 0.82);
+      }
+      .swimlane-v2-connector.end::before {
+        width: 102px;
+        height: 1px;
+      }
+      .swimlane-v2-foot {
+        grid-area: foot;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 14px;
+        font-size: 15px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .swimlane-node {
+        min-height: 120px;
+        border: 1px solid rgba(240, 236, 229, 0.16);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 14px 16px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .swimlane-band.ai .swimlane-node {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.2);
+      }
+      .swimlane-node.review {
+        min-height: 86px;
+        background: rgba(255, 255, 255, 0.02);
+        border-style: dashed;
+      }
+      .swimlane-node .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .swimlane-node .step {
+        font-size: 17px;
+        line-height: 1.12;
+      }
+      .swimlane-node .desc {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .swimlane-connector {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 18px;
+        color: var(--slide-muted);
+      }
+      .swimlane-review-strip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(240px, 0.72fr) minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+      }
+      .swimlane-review-center {
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.02);
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+        color: var(--slide-muted);
+        min-height: 86px;
+      }
+      .swimlane-review-center .role {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--slide-accent);
+      }
+      .swimlane-review-center .title {
+        font-size: 16px;
+        line-height: 1.12;
+        color: var(--slide-text);
+      }
+      .swimlane-review-center .sub {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .swimlane-jump {
+        display: grid;
+        grid-template-columns: 1fr 44px 1fr;
+        gap: 12px;
+        align-items: center;
+      }
+      .swimlane-jump .line {
+        height: 1px;
+        background: var(--slide-line);
+      }
+      .swimlane-jump .arrow {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 18px;
+        color: var(--slide-muted);
+      }
+      .swimlane-bottom-note {
+        margin-top: 12px;
+        padding-left: 0;
+        max-width: 960px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+
+      .before-after {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 18px;
+      }
+      .before-after .side {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+      }
+      .before-after .side .head {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin-bottom: 16px;
+      }
+      .before-after .side .title {
+        font-size: 36px;
+        line-height: 1.05;
+        margin-bottom: 22px;
+        max-width: 620px;
+      }
+      .energy-bars {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        align-items: end;
+        height: 310px;
+        margin-top: 18px;
+      }
+      .bar-wrap {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        gap: 10px;
+        height: 100%;
+      }
+      .bar {
+        position: relative;
+        width: 100%;
+        min-height: 56px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.02);
+      }
+      .bar.orange {
+        background: var(--c-orange);
+        border-color: var(--c-orange);
+      }
+      .bar .value {
+        position: absolute;
+        left: 12px;
+        top: 12px;
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+      }
+      .bar-wrap .tag {
+        display: inline-flex;
+        align-self: flex-start;
+        font-size: 14px;
+        padding: 8px 10px;
+        border: 1px solid var(--slide-line);
+      }
+      .time-callout {
+        margin-top: 20px;
+        font-size: 30px;
+        line-height: 1.18;
+      }
+
+      .growth-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .growth-card {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        min-height: 280px;
+      }
+      .growth-card .num {
+        font-family: var(--f-mono);
+        font-size: 15px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        margin-bottom: 22px;
+      }
+      .growth-card .title {
+        font-size: 34px;
+        line-height: 1.06;
+        margin-bottom: 16px;
+      }
+      .growth-card .body {
+        font-size: 20px;
+        color: var(--slide-muted);
+      }
+      .growth-footer {
+        margin-top: 18px;
+        padding-top: 18px;
+        border-top: 1px solid var(--slide-line);
+        font-size: 26px;
+        line-height: 1.28;
+      }
+
+      .value-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 18px;
+      }
+      .value-card {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        min-height: 260px;
+      }
+      .value-card .title {
+        font-size: 34px;
+        line-height: 1.05;
+        margin-bottom: 14px;
+      }
+      .value-card .metric {
+        font-size: 44px;
+        line-height: 1.03;
+        margin-bottom: 14px;
+      }
+      .value-card .body {
+        font-size: 20px;
+        color: var(--slide-muted);
+      }
+      .value-strip {
+        margin-top: 20px;
+        padding-top: 18px;
+        border-top: 1px solid var(--slide-line);
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 18px;
+        align-items: center;
+      }
+      .value-strip .left {
+        font-size: 26px;
+        line-height: 1.25;
+      }
+      .value-strip .right {
+        font-family: var(--f-body);
+        font-size: 15px;
+        letter-spacing: 0;
+        color: var(--slide-muted);
+      }
+
+      .mindset {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+        align-items: stretch;
+      }
+      .mindset .side {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 24px;
+        min-height: 360px;
+      }
+      .mindset .side .head {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        margin-bottom: 18px;
+      }
+      .mindset .side .big {
+        font-size: 60px;
+        line-height: 0.95;
+        margin-bottom: 20px;
+      }
+      .mindset .side .body {
+        font-size: 22px;
+        color: var(--slide-muted);
+        max-width: 660px;
+      }
+      .mindset .bridge {
+        display: grid;
+        place-items: center;
+        min-height: 360px;
+      }
+      .mindset .bridge .arrow {
+        font-family: var(--f-mono);
+        font-size: 16px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .mindset .bridge .line {
+        width: 100%;
+        height: 1px;
+        background: var(--slide-line);
+        margin: 22px 0;
+      }
+
+      .future-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+      }
+      .future-card {
+        min-height: 132px;
+        border: 1px solid var(--slide-line);
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .future-card .head {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .future-card .body {
+        font-size: 24px;
+        line-height: 1.08;
+      }
+      .future-strip {
+        margin-top: 18px;
+        display: grid;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 18px;
+        padding-top: 18px;
+        border-top: 1px solid var(--slide-line);
+      }
+      .future-strip .left {
+        font-size: 30px;
+        line-height: 1.22;
+      }
+      .future-strip .right {
+        font-size: 20px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+
+      .end-shell {
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        height: 100%;
+      }
+      .end-plate {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0;
+        align-items: end;
+        max-width: 860px;
+      }
+      .end-plate .big {
+        font-size: 96px;
+        line-height: 0.9;
+        margin: 0;
+      }
+      .end-plate .sub {
+        margin-top: 18px;
+        font-size: 24px;
+        line-height: 1.35;
+        max-width: 760px;
+      }
+
+      .page-number {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .slide.orange .page-number {
+        color: rgba(17, 17, 17, 0.52);
+      }
+
+      [data-anim] {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+      .slide.visible [data-anim="fade-up"] {
+        animation: fadeUp var(--dur-enter) var(--ease-enter) forwards;
+        animation-fill-mode: forwards;
+      }
+      .slide.visible [data-anim="fade-in"] {
+        animation: fadeIn var(--dur-enter) var(--ease-enter) forwards;
+        animation-fill-mode: forwards;
+      }
+      .slide.visible [data-anim="scale-in"] {
+        animation: scaleIn var(--dur-enter) var(--ease-enter) forwards;
+        animation-fill-mode: forwards;
+      }
+      .slide.visible [data-delay="1"] {
+        animation-delay: 0.1s;
+      }
+      .slide.visible [data-delay="2"] {
+        animation-delay: 0.2s;
+      }
+      .slide.visible [data-delay="3"] {
+        animation-delay: 0.3s;
+      }
+      .slide.visible [data-delay="4"] {
+        animation-delay: 0.4s;
+      }
+      .slide.visible [data-delay="5"] {
+        animation-delay: 0.5s;
+      }
+      .slide.visible [data-delay="6"] {
+        animation-delay: 0.6s;
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(28px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+        }
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes scaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.96);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      /* ===========================================
+         EDIT / NOTES UI
+         =========================================== */
+      #editHotzone {
+        position: fixed;
+        inset: 0 auto auto 0;
+        width: 88px;
+        height: 88px;
+        z-index: 2000;
+        cursor: pointer;
+      }
+      #editDock {
+        position: fixed;
+        top: 18px;
+        left: 18px;
+        z-index: 2001;
+        display: flex;
+        gap: 10px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateY(-8px);
+        transition:
+          opacity 0.22s ease,
+          transform 0.22s ease;
+      }
+      #editDock.open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+      }
+      .icon-btn {
+        width: 40px;
+        height: 40px;
+        border: 1px solid rgba(240, 236, 229, 0.12);
+        background: rgba(17, 17, 17, 0.7);
+        color: var(--c-ink);
+        display: grid;
+        place-items: center;
+        padding: 0;
+        cursor: pointer;
+      }
+      .icon-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .slide.orange .icon-btn {
+        background: rgba(17, 17, 17, 0.08);
+        color: #111111;
+        border-color: rgba(17, 17, 17, 0.18);
+      }
+      .icon-btn.active {
+        background: var(--c-orange);
+        color: #111111;
+        border-color: var(--c-orange);
+      }
+      .slide.orange .icon-btn.active {
+        background: #111111;
+        color: var(--c-bg-orange);
+        border-color: #111111;
+      }
+      #notesPanel {
+        position: fixed;
+        right: 20px;
+        top: 20px;
+        width: 420px;
+        max-height: calc(100vh - 40px);
+        overflow: auto;
+        z-index: 1800;
+        background: rgba(17, 17, 17, 0.88);
+        border: 1px solid rgba(240, 236, 229, 0.12);
+        color: var(--c-ink);
+        padding: 18px 18px 16px;
+        opacity: 0;
+        pointer-events: none;
+        transform: translateX(16px);
+        transition:
+          opacity 0.22s ease,
+          transform 0.22s ease;
+      }
+      #notesPanel.open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateX(0);
+      }
+      #notesPanel .head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 14px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(240, 236, 229, 0.12);
+      }
+      #notesPanel .head .title {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      #notesPanel .slide-title {
+        font-size: 22px;
+        line-height: 1.2;
+        margin-bottom: 14px;
+      }
+      #notesPanel .body {
+        white-space: pre-wrap;
+        font-size: 15px;
+        line-height: 1.55;
+        color: var(--c-ink-soft);
+      }
+      body.editing [data-editable="true"] {
+        outline: 1px dashed rgba(232, 93, 38, 0.8);
+        outline-offset: 4px;
+        cursor: text;
+      }
+      body.editing [data-editable="true"]:focus {
+        outline-style: solid;
+      }
+
+      #navDots {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+      .nav-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        border: 0;
+        background: rgba(255, 255, 255, 0.24);
+        padding: 0;
+        cursor: pointer;
+        transition:
+          transform 0.2s ease,
+          background 0.2s ease,
+          width 0.2s ease;
+      }
+      .slide.orange ~ .deck-controls .nav-dot {
+        background: rgba(17, 17, 17, 0.26);
+      }
+      .nav-dot.active {
+        width: 18px;
+        background: rgba(255, 255, 255, 0.85);
+      }
+      #slideCounter {
+        position: fixed;
+        right: 28px;
+        bottom: 20px;
+        z-index: 1000;
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.28);
+        user-select: none;
+      }
+      .slide.orange ~ #slideCounter {
+        color: rgba(17, 17, 17, 0.42);
+      }
+      .slide--cover {
+        background:
+          radial-gradient(circle at 15% 20%, rgba(147, 98, 68, 0.12), transparent 24%),
+          radial-gradient(circle at 82% 18%, rgba(147, 98, 68, 0.06), transparent 20%),
+          linear-gradient(180deg, #111111 0%, #161514 100%);
+      }
+
+      /* Deck-wide typography balance pass: keep hierarchy, soften the extremes. */
+      .chrome,
+      .foot,
+      .label,
+      .kicker,
+      .panel-title,
+      .page-number,
+      .chip,
+      .v-label,
+      .photo-label,
+      .history-card .meta,
+      .lane-label,
+      .lane .mini .idx,
+      .lane .mini-photo-label,
+      .shot-card .tag,
+      .solution-shot .overlay .badge,
+      .resource-step .idx,
+      .resource-step .flag,
+      .flow-step .idx,
+      .loop-node .idx,
+      .loop-core .mono,
+      .pipeline-step .idx,
+      .pipeline-step .role,
+      .before-after .side .head,
+      .bar .value,
+      .bar-wrap .tag,
+      .growth-card .num,
+      .future-card .head,
+      .compare .half .half-title,
+      .compare .line .arrow,
+      .cover-meta .meta-title,
+      .stat .footnote {
+        font-size: 16px;
+      }
+
+      .display {
+        font-size: 86px;
+        line-height: 0.96;
+      }
+
+      .h1 {
+        font-size: 60px;
+        line-height: 1;
+      }
+
+      .h2 {
+        font-size: 46px;
+        line-height: 1.06;
+      }
+
+      .slide--cover .display {
+        font-size: 66px;
+        line-height: 0.98;
+      }
+
+      .cover-deckline {
+        font-size: 24px;
+      }
+
+      .cover-meta .meta-value {
+        font-size: 18px;
+      }
+
+      .cover-caption .big-line,
+      .cover-caption .muted {
+        font-size: 21px !important;
+      }
+
+      .history-card .caption .title {
+        font-size: 16px;
+      }
+
+      .history-card .caption .note {
+        font-size: 12px;
+      }
+
+      .history-summary .summary-copy {
+        font-size: 24px;
+      }
+
+      .resource-step .desc,
+      .flow-step .note {
+        font-size: 12px;
+      }
+
+      .shot-note,
+      .solution-shot .overlay .title,
+      .solution-side-note {
+        font-size: 16px;
+      }
+
+      .solution-claim {
+        font-size: 44px;
+        line-height: 1;
+      }
+
+      .definition .callout {
+        font-size: 46px;
+        line-height: 1.04;
+      }
+
+      .pain .title,
+      .growth-card .title,
+      .value-card .title {
+        font-size: 30px;
+      }
+
+      .compare .half .main {
+        font-size: 42px;
+        line-height: 1.02;
+      }
+
+      .compare .line {
+        font-size: 21px;
+      }
+
+      .compare .summary,
+      .growth-footer,
+      .value-strip .left {
+        font-size: 23px;
+      }
+
+      .loop-core,
+      .loop-node .step,
+      .pipeline-step .step,
+      .flow-step .name {
+        font-size: 22px;
+      }
+
+      .pipeline-step .desc,
+      .loop-node .desc,
+      .value-strip .right {
+        font-size: 14px;
+      }
+
+      .before-after .side .title {
+        font-size: 32px;
+      }
+
+      .time-callout,
+      .future-strip .left {
+        font-size: 26px;
+      }
+
+      .value-card .metric {
+        font-size: 38px;
+      }
+
+      .mindset .side .big {
+        font-size: 48px;
+        line-height: 1;
+      }
+
+      .future-card .body {
+        font-size: 22px;
+      }
+
+      .end-shell {
+        justify-content: center;
+      }
+
+      .end-plate .big {
+        font-size: 72px;
+        line-height: 0.98;
+      }
+
+      #slideCounter,
+      #notesPanel .head .title {
+        font-size: 14px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="deck-viewport">
+      <main class="deck-stage" id="deckStage">
+        <section class="slide dark slide--cover active visible" data-title="封面" data-notes="先把听众带进“重复劳动被交出去”的直觉里，再进入案例本身。封面不要像汇报页，要像一段故事的开口。">
+          <div class="slide-shell">
+            <div class="cover-layout editorial">
+              <div class="cover-copy">
+                <div class="kicker" data-anim="fade-up">宣讲 / 资源位自动化</div>
+                <h1 class="display" data-anim="fade-up" data-delay="1" data-editable="true" data-edit-id="cover-title">用 ai 做 coding，<br />我把重复劳动交出去了</h1>
+                <p class="cover-deckline" data-anim="fade-up" data-delay="2" data-editable="true" data-edit-id="cover-subtitle">这不是一次工具演示，而是一次工作方式的变化：把重复、机械、低价值的事交给 AI，把人的时间还给更值得做的地方。</p>
+                <div class="cover-tags" data-anim="fade-up" data-delay="3">
+                  <div class="chip">历史类比</div>
+                  <div class="chip">资源位自动化</div>
+                  <div class="chip">AI Coding</div>
+                </div>
+                <div class="cover-meta" data-anim="fade-up" data-delay="4">
+                  <div class="meta-block">
+                    <div class="meta-title">speaker</div>
+                    <div class="meta-value" data-editable="true" data-edit-id="cover-speaker">梁丰</div>
+                  </div>
+                  <div class="meta-block">
+                    <div class="meta-title">department</div>
+                    <div class="meta-value">用户体验与增长部</div>
+                  </div>
+                  <div class="meta-block">
+                    <div class="meta-title">date</div>
+                    <div class="meta-value">2026年9月1日</div>
+                  </div>
+                </div>
+                <div class="cover-caption" data-anim="fade-up" data-delay="5">
+                  <div class="big-line">从手工算表，到 AI 写程序。</div>
+                  <div class="muted" style="font-size: 22px; line-height: 1.45">人不是更忙了，而是开始把重复劳动交给更合适的工具。</div>
+                </div>
+              </div>
+              <div class="cover-visual" data-anim="scale-in" data-delay="2" aria-hidden="true">
+                <div class="photo-frame tall">
+                  <img src="./assets/ssb_records_office.jpg" alt="历史办公场景" />
+                  <div class="photo-label">manual era</div>
+                </div>
+                <div class="photo-frame lower">
+                  <img src="./assets/general_ledger_chart_1919.jpg" alt="手工账表" />
+                  <div class="photo-label">before spreadsheets</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark slide--statement" data-title="引言" data-notes="这一页讲历史类比。重点不是技术细节，而是让听众接受：工具革命会重写人的分工。语速稍慢，故事讲透。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>引言</div>
+              <div class="page-number">02 / 17</div>
+            </div>
+            <div class="history-layout" style="padding-top: 18px;">
+              <div class="history-stack">
+                <div class="history-card history-card--hero" data-anim="fade-up">
+                  <img src="./assets/ssb_records_office.jpg" alt="手工算表时代的办公室" />
+                  <div class="meta">1940s / 手工时代</div>
+                  <div class="caption">
+                    <div class="title">表格不是做出来的，是一格一格抄出来的</div>
+                    <div class="note">会计、统计员靠尺子、算盘和铅笔，把数据整理成能看的表。</div>
+                  </div>
+                </div>
+                <div class="history-card" data-anim="fade-up" data-delay="1">
+                  <img src="./assets/general_ledger_chart_1919.jpg" alt="早期手工账表" />
+                  <div class="meta">手工账本</div>
+                  <div class="caption">
+                    <div class="title">每改一个数字，往往要整页重算</div>
+                    <div class="note">错误代价很高，工作也被牢牢锁在重复劳动里。</div>
+                  </div>
+                </div>
+                <div class="history-card" data-anim="fade-up" data-delay="2">
+                  <img src="./assets/history/blythe_house_adding_machine_room_1924.jpg" alt="加法机房里的手工算表场景" />
+                  <div class="meta">adding machine</div>
+                  <div class="caption">
+                    <div class="title">算得更快了，但还是人在围着表转</div>
+                    <div class="note">机器进来以后，工作没消失，只是被压缩成更密集的重复动作。</div>
+                  </div>
+                </div>
+              </div>
+              <div class="history-aside">
+                <div class="history-card history-card--excel" data-anim="fade-up" data-delay="1">
+                  <img src="./assets/history/us_census_bureau_computer_room_1980s.jpg" alt="Excel时代的电脑办公场景" />
+                  <div class="meta">excel era</div>
+                  <div class="caption">
+                    <div class="title">Excel 把表格搬进了电脑</div>
+                    <div class="note">复制、拖拽、公式，让重复劳动第一次开始规模化消失。</div>
+                  </div>
+                </div>
+                <div class="history-summary" data-anim="fade-up" data-delay="2">
+                  <div class="panel-title">劳动价值出现了什么变化？</div>
+                  <p class="summary-copy">以前劳动价值更多来自体力和时间投入，做得快、做得稳就是本事。<span class="accent">Excel之后，人把精力放在判断什么是对的、什么该保留、什么要改。</span></p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide orange slide--chapter" data-title="分节 1" data-notes="这一页是分节页，别讲太多。只要把听众从“历史类比”带到“我遇到的具体问题”即可。">
+          <div class="slide-shell center">
+            <div class="kicker" data-anim="fade-up">背景</div>
+            <div class="rule" style="margin: 22px 0 28px" data-anim="fade-in"></div>
+            <h2 class="h1" style="max-width: 1120px" data-anim="fade-up" data-delay="1">我遇到的那个“表格时刻”</h2>
+            <p class="lead" style="max-width: 900px; margin-top: 20px" data-anim="fade-up" data-delay="2">当一件小事重复到让你怀疑“这不该是人做的”，变革就来了。</p>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="资源位是什么" data-notes="这一页不要讲成定义题，要讲成流程题。重点是把人工时代的反复、串联、复制粘贴讲透，让后面为什么要自动化有抓手。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>背景 / 资源位到底是什么</div>
+              <div class="page-number">04 / 17</div>
+            </div>
+            <div class="resource-layout" style="padding-top: 18px;">
+              <div class="resource-intro">
+                <div class="kicker" data-anim="fade-up">what</div>
+                <h2 class="h2" style="max-width: 900px; margin-top: 12px" data-anim="fade-up" data-delay="1">资源位配置不是一个动作，而是一条在几个主体之间反复往返的链路</h2>
+                <p class="body muted" style="max-width: 900px; margin-top: 16px" data-anim="fade-up" data-delay="2">上游给需求，中台排期；中台再回给上游，补物料；物料回到中台后，再复制到后台配置；后台审核走查后，再回到中台确认，最后才到用户。</p>
+                <div class="flow-board resource" data-anim="fade-up" data-delay="3">
+                  <div class="flow-stage top">
+                    <div class="flow-node">
+                      <div class="idx">01 / upstream</div>
+                      <div class="name">上游提需求</div>
+                      <div class="copy">先把要做什么、什么时候做说清楚。</div>
+                    </div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">02 / middle</div>
+                      <div class="name">中台排期 / 计算 / 分配</div>
+                      <div class="copy">先把需求拆开，算资源，再排顺序。</div>
+                    </div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">03 / upstream</div>
+                      <div class="name">回给上游并补物料</div>
+                      <div class="copy">排完以后，再回头通知业务方准备素材。</div>
+                    </div>
+                  </div>
+                  <div class="flow-drop">↓</div>
+                  <div class="flow-stage bottom">
+                    <div class="flow-node highlight">
+                      <div class="idx">04 / middle</div>
+                      <div class="name">中台复制到后台配置</div>
+                      <div class="copy">把同一套物料，一项项填进不同资源位。</div>
+                    </div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">05 / backend</div>
+                      <div class="name">后台审核 / 走查 / 再确认</div>
+                      <div class="copy">确认没问题后，再回到中台继续推进。</div>
+                    </div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">06 / user</div>
+                      <div class="name">上线给用户</div>
+                      <div class="copy">最后用户才看到真正的结果。</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="resource-caption" data-anim="fade-up" data-delay="4">这件事的难点不在单次配置，而在来回回传、反复确认、再复制一遍。</div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">核心问题：谁来承担这条链路上的重复劳动和反复复制粘贴？</div>
+              <div>资源位配置 · 业务场景</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="四大痛点" data-notes="这页要打出共情。别把它讲成流程问题，而是把它讲成人被消耗的问题。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>背景 / 为什么这件事应该由机器做</div>
+              <div class="page-number">05 / 17</div>
+            </div>
+            <div style="padding-top: 18px;">
+              <div class="kicker" data-anim="fade-up">pain points</div>
+              <h2 class="h2" style="max-width: 980px; margin-top: 12px" data-anim="fade-up" data-delay="1">它耗掉的，不只是时间，还有注意力</h2>
+              <div class="pain-grid" style="margin-top: 26px">
+                <article class="pain" data-anim="fade-up" data-delay="1">
+                  <div class="num">01</div>
+                  <div class="title">机械重复</div>
+                  <div class="body">每次操作几乎一样，却必须全神贯注防出错。</div>
+                </article>
+                <article class="pain" data-anim="fade-up" data-delay="2">
+                  <div class="num">02</div>
+                  <div class="title">低 ROI 消耗</div>
+                  <div class="body">大量时间花在“不要出错”，而不是“创造价值”。</div>
+                </article>
+                <article class="pain" data-anim="fade-up" data-delay="3">
+                  <div class="num">03</div>
+                  <div class="title">出错成本高</div>
+                  <div class="body">配置错了影响线上体验，修复还要重新走流程。</div>
+                </article>
+                <article class="pain" data-anim="fade-up" data-delay="4">
+                  <div class="num">04</div>
+                  <div class="title">隐性焦虑</div>
+                  <div class="body">知道自己值得做更重要的事，却被琐事填满。</div>
+                </article>
+              </div>
+              <div class="pain-quote" data-anim="fade-up" data-delay="5">
+                重复劳动不可耻，但一直重复而不改变，是对自己时间的浪费。
+              </div>
+            </div>
+            <div class="foot">
+              <div>共情基础</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="AI coding vs 传统开发" data-notes="这里讲路径对比。重点不是炫技，而是解释为什么这次选择自己动手。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>背景 / 为什么选 AI Coding，而不是传统开发</div>
+              <div class="page-number">06 / 17</div>
+            </div>
+            <div class="compare" style="padding-top: 18px">
+              <div class="half left" data-anim="fade-up">
+                <div class="half-title">传统路径</div>
+                <div class="main">提需求<br />排期<br />开发<br />测试<br />上线</div>
+                <div class="line-list">
+                  <div class="line"><span class="arrow">→</span><span>周期长</span></div>
+                  <div class="line"><span class="arrow">→</span><span>沟通成本高</span></div>
+                  <div class="line"><span class="arrow">→</span><span>反馈链路长</span></div>
+                </div>
+                <div class="summary">自己要先把问题讲清，再等别人帮你解决。</div>
+              </div>
+              <div class="half right" data-anim="fade-up" data-delay="1">
+                <div class="half-title">AI 路径</div>
+                <div class="main">说清需求<br />AI 出初稿<br />人工验收<br />快速上线</div>
+                <div class="line-list">
+                  <div class="line"><span class="arrow">→</span><span>自然语言描述</span></div>
+                  <div class="line"><span class="arrow">→</span><span>AI 生成框架</span></div>
+                  <div class="line"><span class="arrow">→</span><span>人负责判断结果</span></div>
+                </div>
+                <div class="summary">从“等别人解决问题”，变成“自己动手解决自己的问题”。</div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">差异不在“快一点”，而在“把解决权拿回来”。</div>
+              <div>路径选择</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide orange slide--chapter" data-title="分节 2" data-notes="原理部分只讲四步闭环，别展开到实现细节，把时间留给价值。">
+          <div class="slide-shell center">
+            <div class="kicker" data-anim="fade-up">原理</div>
+            <div class="rule" style="margin: 22px 0 28px" data-anim="fade-in"></div>
+            <h2 class="h1" style="max-width: 1060px" data-anim="fade-up" data-delay="1">我是怎么用 AI 写出这个程序的</h2>
+            <p class="lead" style="max-width: 880px; margin-top: 20px" data-anim="fade-up" data-delay="2">不是一键生成，而是人和 AI 反复接力，直到它真的能跑。</p>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="四步闭环" data-notes="这页讲分工。人负责定义问题和判断结果，AI 负责执行层面的编码。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>原理 / 四步闭环</div>
+              <div class="page-number">08 / 17</div>
+            </div>
+            <div class="pipeline-layout" style="padding-top: 18px;">
+              <div class="kicker" data-anim="fade-up">how it works</div>
+              <h2 class="h2" style="max-width: 1080px; margin-top: 12px" data-anim="fade-up" data-delay="1">人先把规则说清楚，再让 AI 接力把程序写出来</h2>
+              <div class="swimlane-v2" data-anim="fade-up" data-delay="2">
+                <div class="swimlane-v2-head human">
+                  <div class="role">HUMAN</div>
+                  <div class="title">定义问题</div>
+                  <div class="sub">先把业务规则和边界想清楚</div>
+                </div>
+                <div class="swimlane-v2-head ai">
+                  <div class="role">AI</div>
+                  <div class="title">理解与开发</div>
+                  <div class="sub">文档、review、coding 一步接一步</div>
+                </div>
+                <div class="swimlane-v2-body">
+                  <article class="swimlane-v2-card human" style="grid-row: 1; grid-column: 1;">
+                    <div class="idx">01</div>
+                    <div class="step">梳理规则</div>
+                    <div class="desc">先把业务目标、边界和例外说清。</div>
+                  </article>
+                  <div class="swimlane-v2-connector" style="grid-row: 1; grid-column: 2;"><span>→</span></div>
+                  <article class="swimlane-v2-card ai" style="grid-row: 1; grid-column: 3;">
+                    <div class="idx">02</div>
+                    <div class="step">生成 PRD</div>
+                    <div class="desc">把自然语言方案翻成文档。</div>
+                  </article>
+                  <div class="swimlane-v2-connector down" style="grid-row: 1; grid-column: 4;"><span>↓</span></div>
+
+                  <article class="swimlane-v2-card ai review" style="grid-row: 2; grid-column: 3;">
+                    <div class="idx">03</div>
+                    <div class="step">AI review PRD</div>
+                    <div class="desc">先查逻辑和边界有没有问题。</div>
+                  </article>
+                  <div class="swimlane-v2-connector down" style="grid-row: 2; grid-column: 4;"><span>↓</span></div>
+
+                  <article class="swimlane-v2-card ai" style="grid-row: 3; grid-column: 3;">
+                    <div class="idx">04</div>
+                    <div class="step">Coding 开发</div>
+                    <div class="desc">按文档把程序写出来。</div>
+                  </article>
+                  <div class="swimlane-v2-connector down" style="grid-row: 3; grid-column: 4;"><span>↓</span></div>
+
+                  <article class="swimlane-v2-card human" style="grid-row: 4; grid-column: 1;">
+                    <div class="idx">06</div>
+                    <div class="step">人工验收</div>
+                    <div class="desc">确认结果没问题，再上线。</div>
+                  </article>
+                  <div class="swimlane-v2-connector end" style="grid-row: 4; grid-column: 2;"><span>←</span></div>
+                  <article class="swimlane-v2-card ai review" style="grid-row: 4; grid-column: 3;">
+                    <div class="idx">05</div>
+                    <div class="step">AI review 代码</div>
+                    <div class="desc">确认实现没问题，再交回人。</div>
+                  </article>
+                </div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">人负责定义问题和判断结果，AI 负责生成、开发和 review。</div>
+              <div>闭环</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="最终方案" data-notes="这一页要把最终交付的样子讲出来：一个表格把重复沟通和配置串起来。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>原理 / 最终方案</div>
+              <div class="page-number">09 / 17</div>
+            </div>
+            <div class="solution-layout" style="padding-top: 18px;">
+              <div class="solution-copy">
+                <div class="kicker" data-anim="fade-up">final form</div>
+                <h2 class="h2" style="max-width: 820px; margin-top: 12px" data-anim="fade-up" data-delay="1">最终实现的，就是一个表格</h2>
+                <p class="solution-sub" data-anim="fade-up" data-delay="2">需求方只需要填表，程序就能自动配置；人保留最后的审核和上线判断。</p>
+                <div class="solution-chips" data-anim="fade-up" data-delay="3">
+                  <div class="chip">填一次表</div>
+                  <div class="chip">自动跑配置</div>
+                  <div class="chip">人工审核上线</div>
+                </div>
+                <div class="panel inset" data-anim="fade-up" data-delay="4" style="margin-top: 24px;">
+                  <div class="panel-title">核心表达</div>
+                  <p class="big-line" style="font-size: 34px; line-height: 1.28; margin: 0;">一个表格，搞定反复沟通和配置效率。</p>
+                </div>
+                <div class="solution-callout" data-anim="fade-up" data-delay="5">需求方只要填表，就能触发程序自动配置，然后人工审核上线。</div>
+              </div>
+              <div class="solution-visual" data-anim="fade-up" data-delay="2">
+                <div class="lane-label">真实成果截图</div>
+                <div class="solution-shot">
+                  <img src="./assets/solution_table.png" alt="首页资源位排期与配置表" />
+                  <div class="overlay">
+                    <div class="badge">table result</div>
+                    <div class="title">首页资源位排期 & 配置表<br />把“沟通 + 排期 + 配置”收进一个入口</div>
+                  </div>
+                </div>
+                <div class="solution-side-note">这张表就是最终交付的入口：需求方填写，程序接手，人工最后审核上线。</div>
+                <div class="video-attachment" data-anim="fade-up" data-delay="3">
+                  <button class="video-launch" type="button" data-video-open data-video-title="Banner 配置演示视频" data-video-src="./assets/banner-config-demo.mp4">
+                    <span class="ico">▶</span>
+                    <span>视频附件</span>
+                  </button>
+                  <div class="video-hint">点击打开视频框，播放 Banner 配置自动化演示。</div>
+                </div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">表格不是终点，它只是把重复劳动收拢成一个入口。</div>
+              <div>落地形态</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide orange slide--chapter" data-title="分节 3" data-notes="价值是高潮。先用分节页收束一下，再进入结果和意义。">
+          <div class="slide-shell center">
+            <div class="kicker" data-anim="fade-up">价值</div>
+            <div class="rule" style="margin: 22px 0 28px" data-anim="fade-in"></div>
+            <h2 class="h1" style="max-width: 1160px" data-anim="fade-up" data-delay="1">做完这件事，到底改变了什么</h2>
+            <p class="lead" style="max-width: 900px; margin-top: 20px" data-anim="fade-up" data-delay="2">省出来的不只是时间，更是认知带宽。</p>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="流程对比" data-notes="这一页先把前后流程摆出来，再进入价值页。重点是：中间那层反复沟通被压缩掉了。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>价值 / 原流程和现流程对比</div>
+              <div class="page-number">11 / 17</div>
+            </div>
+            <div class="process-compare" style="padding-top: 18px">
+              <div class="process-side left" data-anim="fade-up">
+                <div class="head">
+                  <div class="label">原流程</div>
+                  <div class="sub">业务方和中台之间多走一轮，素材和配置都靠人搬运</div>
+                </div>
+                <div class="process-timeline">
+                  <div class="process-step">
+                    <div class="idx">01</div>
+                    <div>
+                      <div class="title">业务方提需求给中台</div>
+                      <div class="desc">先把要做什么发给中台。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">02</div>
+                    <div>
+                      <div class="title">中台排期并返回确认</div>
+                      <div class="desc">排完以后，再回给业务方确认。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">03</div>
+                    <div>
+                      <div class="title">业务方补物料 / 图片 / 链接</div>
+                      <div class="desc">业务方再把素材整理出来，重新传回去。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">04</div>
+                    <div>
+                      <div class="title">中台手动复制到后台配置</div>
+                      <div class="desc">中台把物料一项项复制粘贴到不同后台。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">05</div>
+                    <div>
+                      <div class="title">审核 / 走查 / 修正</div>
+                      <div class="desc">审核后发现问题，再返工修正。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">06</div>
+                    <div>
+                      <div class="title">上线给用户</div>
+                      <div class="desc">最后才真正到用户面前。</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="summary">原来最耗时的，是业务方和中台之间来回传素材、再由人手动搬到后台。</div>
+              </div>
+              <div class="process-side right" data-anim="fade-up" data-delay="1">
+                <div class="head">
+                  <div class="label">现流程</div>
+                  <div class="sub">业务方直接填表，程序自动配置，人工只保留最后审核</div>
+                </div>
+                <div class="process-timeline">
+                  <div class="process-step">
+                    <div class="idx">01</div>
+                    <div>
+                      <div class="title">业务方提需求给中台</div>
+                      <div class="desc">先把要做什么发给中台。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">02</div>
+                    <div>
+                      <div class="title">中台排期并返回确认</div>
+                      <div class="desc">排完以后，先把结果给业务方确认。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">03</div>
+                    <div>
+                      <div class="title">业务方直接填配置表格</div>
+                      <div class="desc">把素材、物料、图片链接直接放进表格。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">04</div>
+                    <div>
+                      <div class="title">程序自动配置 6 个点位</div>
+                      <div class="desc">程序把表格里的信息直接写进后台和资源位。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">05</div>
+                    <div>
+                      <div class="title">人工审核上线</div>
+                      <div class="desc">人只看结果，确认没问题再过审。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">06</div>
+                    <div>
+                      <div class="title">面向用户</div>
+                      <div class="desc">最后结果直接面向用户展示。</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="summary">中间那段人工搬运被压缩成了“填表 - 程序自动配置”这一段。</div>
+              </div>
+              <div class="impact-panel" data-anim="fade-up" data-delay="2">
+                <div class="impact-card big">
+                  <div class="tag">单流程提效</div>
+                  <div class="metric">50%</div>
+                  <div class="copy">原来人工在“传素材、复制、粘贴、再确认”上耗掉的工作量，直接省掉一半。</div>
+                </div>
+                <div class="impact-card">
+                  <div class="tag">复用范围</div>
+                  <div class="mini">6 个资源位点位</div>
+                  <div class="copy">同一套结构化表格，可以复用到更多重复性点位。</div>
+                </div>
+                <div class="impact-card">
+                  <div class="tag">稳定性</div>
+                  <div class="mini">出错率下降</div>
+                  <div class="copy">输入端只要准确，程序执行就是公式化、结构化的。</div>
+                </div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">不是流程更花哨了，而是把重复的那一段交给了程序。</div>
+              <div>前后对比</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="精力解放" data-notes="这页要停留久一点。用数据或示意图把“时间被释放”讲成可见的东西。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>价值 / 精力解放</div>
+              <div class="page-number">12 / 17</div>
+            </div>
+            <div class="before-after" style="padding-top: 18px">
+              <div class="side" data-anim="fade-up">
+                <div class="head">before</div>
+                <div class="title">配置事务占掉了大块时间</div>
+                <div class="energy-bars">
+                  <div class="bar-wrap">
+                    <div class="bar" style="height: 54%">
+                      <div class="value">54%</div>
+                    </div>
+                    <div class="tag">配置事务</div>
+                  </div>
+                  <div class="bar-wrap">
+                    <div class="bar" style="height: 28%">
+                      <div class="value">28%</div>
+                    </div>
+                    <div class="tag">确认沟通</div>
+                  </div>
+                  <div class="bar-wrap">
+                    <div class="bar" style="height: 12%">
+                      <div class="value">12%</div>
+                    </div>
+                    <div class="tag">修正返工</div>
+                  </div>
+                  <div class="bar-wrap">
+                    <div class="bar" style="height: 6%">
+                      <div class="value">6%</div>
+                    </div>
+                    <div class="tag">其他工作</div>
+                  </div>
+                </div>
+              </div>
+              <div class="side" data-anim="fade-up" data-delay="1">
+                <div class="head">after</div>
+                <div class="title">省下来的时间被投回核心工作</div>
+                <div class="energy-bars">
+                  <div class="bar-wrap">
+                    <div class="bar orange" style="height: 18%">
+                      <div class="value">18%</div>
+                    </div>
+                    <div class="tag">配置事务</div>
+                  </div>
+                  <div class="bar-wrap">
+                    <div class="bar orange" style="height: 34%">
+                      <div class="value">34%</div>
+                    </div>
+                    <div class="tag">核心项目</div>
+                  </div>
+                  <div class="bar-wrap">
+                    <div class="bar orange" style="height: 28%">
+                      <div class="value">28%</div>
+                    </div>
+                    <div class="tag">策略思考</div>
+                  </div>
+                  <div class="bar-wrap">
+                    <div class="bar orange" style="height: 20%">
+                      <div class="value">20%</div>
+                    </div>
+                    <div class="tag">新业务探索</div>
+                  </div>
+                </div>
+                <div class="time-callout">每周节省约 5 小时，累计 3 个月就是 60 小时。</div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">不是“多做了点事”，而是“终于有时间做该做的事”。</div>
+              <div>效率释放</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="个人成长" data-notes="这一页讲个人能力边界的变化。要落到人，而不是只落到工具。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>价值 / 个人成长</div>
+              <div class="page-number">13 / 17</div>
+            </div>
+            <div style="padding-top: 18px;">
+              <div class="kicker" data-anim="fade-up">growth</div>
+              <h2 class="h2" style="max-width: 980px; margin-top: 12px" data-anim="fade-up" data-delay="1">为了让 AI 听懂，我反而把业务梳理得更清楚了</h2>
+              <div class="growth-grid" style="margin-top: 26px">
+                <article class="growth-card" data-anim="fade-up" data-delay="1">
+                  <div class="num">01</div>
+                  <div class="title">业务纵深</div>
+                  <div class="body">要把规则讲给 AI 听，就得先把规则自己讲明白。</div>
+                </article>
+                <article class="growth-card" data-anim="fade-up" data-delay="2">
+                  <div class="num">02</div>
+                  <div class="title">技术认知</div>
+                  <div class="body">从“知道有自动化”变成“亲手实现了一个自动化工具”。</div>
+                </article>
+                <article class="growth-card" data-anim="fade-up" data-delay="3">
+                  <div class="num">03</div>
+                  <div class="title">人机协作</div>
+                  <div class="body">学会给 AI 下指令、审校代码、迭代 prompt。</div>
+                </article>
+              </div>
+              <div class="growth-footer" data-anim="fade-up" data-delay="4">
+                工具不会取代人，但会把人的价值推向更上游的位置：定义问题、判断结果、持续优化。
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">业务、技术、协作三个维度一起涨。</div>
+              <div>能力边界</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="公司价值" data-notes="这一页落到组织价值：降本、降错、可规模化。重点是讲可复制性。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>价值 / 公司价值</div>
+              <div class="page-number">14 / 17</div>
+            </div>
+            <div style="padding-top: 18px;">
+              <div class="kicker" data-anim="fade-up">company value</div>
+              <h2 class="h2" style="max-width: 980px; margin-top: 12px" data-anim="fade-up" data-delay="1">它带来的，不只是一个人的提效，而是一个思路的可复制</h2>
+              <div class="value-grid" style="margin-top: 26px">
+                <article class="value-card" data-anim="fade-up" data-delay="1">
+                  <div class="title">降本</div>
+                  <div class="metric">少占人力</div>
+                  <div class="body">把重复性的人工操作从人的主工时里挪出去。</div>
+                </article>
+                <article class="value-card" data-anim="fade-up" data-delay="2">
+                  <div class="title">降错</div>
+                  <div class="metric">少出错</div>
+                  <div class="body">减少人为遗漏、误配和上线前返工。</div>
+                </article>
+                <article class="value-card" data-anim="fade-up" data-delay="3">
+                  <div class="title">规模化</div>
+                  <div class="metric">可复制</div>
+                  <div class="body">这套方法可以迁移到更多重复性工作里，继续解放劳动力。</div>
+                </article>
+              </div>
+              <div class="value-strip" data-anim="fade-up" data-delay="4">
+                <div class="left">真正值得留下来的，是一套“人人可用 AI 提效”的做法。</div>
+                <div class="right">可以降本 / 可以降错 / 可以规模化</div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">让团队看到的是方法，不只是一个结果。</div>
+              <div>可规模化</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide orange slide--chapter" data-title="分节 4" data-notes="未来图景只要两页。分节页负责把气口抬起来。">
+          <div class="slide-shell center">
+            <div class="kicker" data-anim="fade-up">未来图景</div>
+            <div class="rule" style="margin: 22px 0 28px" data-anim="fade-in"></div>
+            <h2 class="h1" style="max-width: 1100px" data-anim="fade-up" data-delay="1">做完这件事之后，我在想什么</h2>
+            <p class="lead" style="max-width: 900px; margin-top: 20px" data-anim="fade-up" data-delay="2">自动化只是起点，真正的题目是：省下来的时间，最终会流向哪里？</p>
+          </div>
+        </section>
+
+        <section class="slide dark" data-title="未来图景" data-notes="这里收束成一个更大的问题：自动化只是最基础的应用，真正重要的是下一层用法。">
+          <div class="slide-shell grid">
+            <div class="chrome">
+              <div>未来 / 自动化只是起点</div>
+              <div class="page-number">16 / 17</div>
+            </div>
+            <div style="padding-top: 18px;">
+              <div class="kicker" data-anim="fade-up">future</div>
+              <h2 class="h2" style="max-width: 1060px; margin-top: 12px" data-anim="fade-up" data-delay="1">随着 AI 应用极大丰富，用 AI 做自动化会变成最基础、最“无聊”的应用</h2>
+              <div class="future-grid" style="margin-top: 26px">
+                <article class="future-card" data-anim="fade-up" data-delay="1">
+                  <div class="head">01</div>
+                  <div class="body">聊天</div>
+                </article>
+                <article class="future-card" data-anim="fade-up" data-delay="2">
+                  <div class="head">02</div>
+                  <div class="body">陪伴</div>
+                </article>
+                <article class="future-card" data-anim="fade-up" data-delay="3">
+                  <div class="head">03</div>
+                  <div class="body">答疑</div>
+                </article>
+                <article class="future-card" data-anim="fade-up" data-delay="4">
+                  <div class="head">04</div>
+                  <div class="body">陪练</div>
+                </article>
+                <article class="future-card" data-anim="fade-up" data-delay="2">
+                  <div class="head">05</div>
+                  <div class="body">剪视频</div>
+                </article>
+                <article class="future-card" data-anim="fade-up" data-delay="3">
+                  <div class="head">06</div>
+                  <div class="body">做影视</div>
+                </article>
+                <article class="future-card" data-anim="fade-up" data-delay="4">
+                  <div class="head">07</div>
+                  <div class="body">真人 TTS</div>
+                </article>
+                <article class="future-card" data-anim="fade-up" data-delay="5">
+                  <div class="head">08</div>
+                  <div class="body">自动工作</div>
+                </article>
+              </div>
+              <div class="future-strip" data-anim="fade-up" data-delay="5">
+                <div class="left">真正更大的想象力，在于 AI 继续创造新的 AI 应用，而不是只做“替人跑流程”的工具。</div>
+                <div class="right">
+                  你所在的工作流里，还有哪些“该机器做”的事？<br />
+                  省下来的时间，你打算用来做什么？
+                </div>
+              </div>
+            </div>
+            <div class="foot">
+              <div class="muted">技术的意义，不是让人跑更快，而是让人想清楚往哪跑。</div>
+              <div>思考题</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="slide dark slide--end" data-title="结束" data-notes="结尾留给 Q&A。语气轻一点，别再往里塞信息了。">
+          <div class="slide-shell end-shell">
+            <div class="end-plate">
+              <div>
+                <div class="kicker" data-anim="fade-up">thank you</div>
+                <h2 class="big" data-anim="fade-up" data-delay="1">谢谢观看</h2>
+                <p class="sub muted" data-anim="fade-up" data-delay="2">如果这件事带来了一点启发，那它真正值得传播的，不只是自动化本身，而是把重复劳动交出去的那种可能。</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <div class="deck-controls">
+      <div id="navDots" aria-label="slides"></div>
+    </div>
+    <div id="slideCounter">01 / 17</div>
+
+    <div id="editHotzone" aria-hidden="true"></div>
+    <div id="editDock" aria-label="editing controls">
+      <button class="icon-btn" id="editToggle" title="Edit mode">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z" />
+        </svg>
+      </button>
+      <button class="icon-btn" id="notesToggle" title="Notes">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M6 4h12a2 2 0 0 1 2 2v10l-4 4H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2Z" />
+          <path d="M8 8h8M8 12h6" />
+        </svg>
+      </button>
+      <button class="icon-btn" id="exportToggle" title="Export">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+          <path d="M7 10l5 5 5-5" />
+          <path d="M12 15V3" />
+        </svg>
+      </button>
+    </div>
+
+    <aside id="notesPanel" aria-live="polite">
+      <div class="head">
+        <div class="title">speaker notes</div>
+        <div class="page-number" id="notesSlideNo">01</div>
+      </div>
+      <div class="slide-title" id="notesTitle">封面</div>
+      <div class="body" id="notesBody"></div>
+    </aside>
+
+    <div id="videoModal" class="video-modal" aria-hidden="true">
+      <div class="video-modal__backdrop" data-video-close></div>
+      <div class="video-modal__panel" role="dialog" aria-modal="true" aria-label="视频附件播放器">
+        <div class="video-modal__topbar">
+          <div>
+            <div class="video-modal__title" id="videoModalTitle">视频附件</div>
+            <div class="video-modal__hint" id="videoModalHint">点击播放按钮即可播放项目内视频。</div>
+          </div>
+          <button class="video-modal__close" type="button" data-video-close aria-label="关闭视频">×</button>
+        </div>
+        <div class="video-modal__frame">
+          <video id="videoPlayer" controls preload="metadata" playsinline></video>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      class SlideDeck {
+        constructor() {
+          this.stage = document.getElementById("deckStage");
+          this.slides = [...document.querySelectorAll(".slide")];
+          this.current = 0;
+          this.navDots = document.getElementById("navDots");
+          this.counter = document.getElementById("slideCounter");
+          this.notesPanel = document.getElementById("notesPanel");
+          this.notesBody = document.getElementById("notesBody");
+          this.notesTitle = document.getElementById("notesTitle");
+          this.notesSlideNo = document.getElementById("notesSlideNo");
+          this.editDock = document.getElementById("editDock");
+          this.editHotzone = document.getElementById("editHotzone");
+          this.editToggle = document.getElementById("editToggle");
+          this.notesToggle = document.getElementById("notesToggle");
+          this.exportToggle = document.getElementById("exportToggle");
+          this.videoModal = document.getElementById("videoModal");
+          this.videoPlayer = document.getElementById("videoPlayer");
+          this.videoModalTitle = document.getElementById("videoModalTitle");
+          this.videoModalHint = document.getElementById("videoModalHint");
+          this.videoLaunchers = [...document.querySelectorAll("[data-video-open]")];
+          this.editMode = false;
+          this.notesMode = false;
+          this.defaultVideoSrc = "./assets/banner-config-demo.mp4";
+          this.wheelLock = false;
+          this.touchStart = null;
+          this.buildNav();
+          this.restoreEdits();
+          this.applySavedToDom();
+          this.bindEvents();
+          this.scale();
+          this.showSlide(0, false);
+        }
+
+        scale() {
+          const fit = () => {
+            const factor = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+            const x = (window.innerWidth - 1920 * factor) / 2;
+            const y = (window.innerHeight - 1080 * factor) / 2;
+            this.stage.style.transform = `translate(${x}px, ${y}px) scale(${factor})`;
+          };
+          fit();
+          window.addEventListener("resize", fit);
+        }
+
+        buildNav() {
+          this.navDots.innerHTML = "";
+          this.slides.forEach((slide, index) => {
+            const dot = document.createElement("button");
+            dot.className = "nav-dot";
+            dot.type = "button";
+            dot.title = slide.dataset.title || `Slide ${index + 1}`;
+            dot.addEventListener("click", () => this.showSlide(index));
+            this.navDots.appendChild(dot);
+          });
+        }
+
+        bindEvents() {
+          window.addEventListener("keydown", (event) => {
+            if (this.videoModal.classList.contains("open")) {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                this.closeVideoModal();
+              }
+              return;
+            }
+            if (event.target && ["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
+              return;
+            }
+            if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+              event.preventDefault();
+              this.showSlide(this.current + 1);
+            } else if (event.key === "ArrowLeft" || event.key === "PageUp") {
+              event.preventDefault();
+              this.showSlide(this.current - 1);
+            } else if (event.key.toLowerCase() === "e") {
+              this.toggleEditMode();
+            } else if (event.key.toLowerCase() === "n") {
+              this.toggleNotes();
+            } else if (event.key === "Escape") {
+              this.setNotes(false);
+              this.setEditMode(false);
+            }
+          });
+
+          window.addEventListener(
+            "wheel",
+            (event) => {
+              if (Math.abs(event.deltaY) < 24 || this.wheelLock) return;
+              event.preventDefault();
+              this.wheelLock = true;
+              this.showSlide(this.current + (event.deltaY > 0 ? 1 : -1));
+              window.setTimeout(() => {
+                this.wheelLock = false;
+              }, 460);
+            },
+            { passive: false }
+          );
+
+          window.addEventListener("pointerdown", (event) => {
+            if (event.pointerType !== "touch") return;
+            this.touchStart = { x: event.clientX, y: event.clientY, t: Date.now() };
+          });
+          window.addEventListener("pointerup", (event) => {
+            if (!this.touchStart || event.pointerType !== "touch") return;
+            const dx = event.clientX - this.touchStart.x;
+            const dy = event.clientY - this.touchStart.y;
+            if (Math.abs(dx) > 56 && Math.abs(dx) > Math.abs(dy)) {
+              this.showSlide(this.current + (dx < 0 ? 1 : -1));
+            }
+            this.touchStart = null;
+          });
+
+          const openDock = () => this.editDock.classList.add("open");
+          const closeDock = () => {
+            if (!this.editMode && !this.notesMode) {
+              this.editDock.classList.remove("open");
+            }
+          };
+          let hoverTimer = null;
+          this.editHotzone.addEventListener("mouseenter", () => {
+            hoverTimer = window.setTimeout(openDock, 320);
+          });
+          this.editHotzone.addEventListener("mouseleave", () => {
+            window.clearTimeout(hoverTimer);
+            window.setTimeout(closeDock, 180);
+          });
+          this.editDock.addEventListener("mouseenter", openDock);
+          this.editDock.addEventListener("mouseleave", closeDock);
+
+          this.editToggle.addEventListener("click", () => this.toggleEditMode());
+          this.notesToggle.addEventListener("click", () => this.toggleNotes());
+          this.exportToggle.addEventListener("click", () => this.exportHtml());
+          this.videoLaunchers.forEach((button) => {
+            button.addEventListener("click", () => {
+              this.openVideoModal(
+                button.dataset.videoSrc || this.defaultVideoSrc,
+                button.dataset.videoTitle || "视频附件"
+              );
+            });
+          });
+          this.videoModal.addEventListener("click", (event) => {
+            if (event.target?.dataset?.videoClose !== undefined || event.target === this.videoModal) {
+              this.closeVideoModal();
+            }
+          });
+
+          this.slides.forEach((slide) => {
+            slide.querySelectorAll("[data-editable='true']").forEach((node) => {
+              node.addEventListener("input", () => {
+                const key = this.storageKey(node.dataset.editId);
+                localStorage.setItem(key, node.innerHTML);
+              });
+            });
+          });
+        }
+
+        storageKey(id) {
+          return `broadside-edit:${id}`;
+        }
+
+        restoreEdits() {
+          document.querySelectorAll("[data-editable='true'][data-edit-id]").forEach((node) => {
+            const saved = localStorage.getItem(this.storageKey(node.dataset.editId));
+            if (saved) {
+              node.innerHTML = saved;
+            }
+          });
+        }
+
+        applySavedToDom() {
+          if (!this.editMode) {
+            document.querySelectorAll("[data-editable='true']").forEach((node) => {
+              node.setAttribute("contenteditable", "false");
+              node.setAttribute("spellcheck", "false");
+            });
+          }
+        }
+
+        setEditMode(flag) {
+          this.editMode = flag;
+          document.body.classList.toggle("editing", flag);
+          this.editToggle.classList.toggle("active", flag);
+          document.querySelectorAll("[data-editable='true']").forEach((node) => {
+            node.setAttribute("contenteditable", flag ? "true" : "false");
+            node.setAttribute("spellcheck", "false");
+          });
+          this.editDock.classList.toggle("open", flag || this.notesMode);
+        }
+
+        toggleEditMode() {
+          this.setEditMode(!this.editMode);
+        }
+
+        setNotes(flag) {
+          this.notesMode = flag;
+          this.notesToggle.classList.toggle("active", flag);
+          this.notesPanel.classList.toggle("open", flag);
+          this.editDock.classList.toggle("open", flag || this.editMode);
+          this.updateNotes();
+        }
+
+        toggleNotes() {
+          this.setNotes(!this.notesMode);
+        }
+
+        setVideoSource(src) {
+          this.videoPlayer.src = src || this.defaultVideoSrc;
+          this.videoPlayer.load();
+        }
+
+        openVideoModal(src = "", title = "视频附件") {
+          this.videoModal.classList.add("open");
+          this.videoModal.setAttribute("aria-hidden", "false");
+          this.videoModalTitle.textContent = title;
+          this.videoModalHint.textContent = "视频已内置到项目资源里，点击播放按钮即可播放。";
+          this.setVideoSource(src || this.defaultVideoSrc);
+          this.videoPlayer.play().catch(() => {});
+        }
+
+        closeVideoModal() {
+          this.videoModal.classList.remove("open");
+          this.videoModal.setAttribute("aria-hidden", "true");
+          this.videoPlayer.pause();
+          this.videoPlayer.currentTime = 0;
+        }
+
+        showSlide(index, focus = true) {
+          const next = Math.max(0, Math.min(index, this.slides.length - 1));
+          this.current = next;
+          this.slides.forEach((slide, i) => {
+            const active = i === next;
+            slide.classList.toggle("active", active);
+            slide.classList.toggle("visible", active);
+          });
+          this.navDots.querySelectorAll(".nav-dot").forEach((dot, i) => {
+            dot.classList.toggle("active", i === next);
+          });
+          this.counter.textContent = `${String(next + 1).padStart(2, "0")} / ${String(this.slides.length).padStart(2, "0")}`;
+          this.updateNotes();
+          if (focus) {
+            this.stage.focus?.();
+          }
+        }
+
+        updateNotes() {
+          const slide = this.slides[this.current];
+          this.notesTitle.textContent = slide?.dataset.title || `Slide ${this.current + 1}`;
+          this.notesSlideNo.textContent = String(this.current + 1).padStart(2, "0");
+          this.notesBody.textContent = slide?.dataset.notes || "";
+        }
+
+        exportHtml() {
+          const html = "<!doctype html>\n" + document.documentElement.outerHTML;
+          const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = document.title.replace(/\s+/g, "_") + ".html";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+        }
+      }
+
+      new SlideDeck();
+    </script>
+  </body>
+</html>
