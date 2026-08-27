@@ -924,8 +924,8 @@
       }
       .resource-layout {
         display: grid;
-        grid-template-columns: 1.02fr 0.98fr;
-        gap: 30px;
+        grid-template-columns: 1fr;
+        gap: 18px;
         align-items: start;
       }
       .resource-intro {
@@ -933,12 +933,154 @@
         padding-top: 22px;
         display: flex;
         flex-direction: column;
-        gap: 14px;
+        gap: 16px;
+      }
+      .resource-flow.clean {
+        margin-top: 6px;
+        gap: 10px;
+      }
+      .resource-flow.clean .resource-step {
+        grid-template-columns: 76px minmax(0, 1fr) 150px;
+        padding: 16px 18px;
+        align-items: center;
+      }
+      .resource-flow.clean .resource-step .idx {
+        padding-top: 0;
+        font-size: 13px;
+      }
+      .resource-flow.clean .resource-step .name {
+        font-size: 22px;
+      }
+      .resource-flow.clean .resource-step .desc {
+        max-width: none;
+        margin-top: 6px;
+        font-size: 13px;
+      }
+      .resource-flow.clean .resource-step .flag {
+        text-align: right;
+        font-size: 12px;
+      }
+      .resource-flow.clean .resource-arrow {
+        font-size: 20px;
+        padding: 2px 0;
+      }
+      .resource-caption {
+        margin-top: 4px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .flow-board.resource .flow-stage.top,
+      .flow-board.resource .flow-stage.bottom {
+        grid-template-columns: minmax(0, 1fr) 36px minmax(0, 1fr) 36px minmax(0, 1fr);
+      }
+      .flow-board.resource .flow-node {
+        min-height: 108px;
+      }
+      .flow-board.resource .flow-node.highlight {
+        min-height: 118px;
+      }
+      .flow-board.resource .flow-node .name {
+        font-size: 20px;
+      }
+      .flow-board.resource .flow-link {
+        font-size: 20px;
+      }
+      .flow-board.resource .flow-drop {
+        font-size: 18px;
       }
       .resource-tags {
         display: flex;
         flex-wrap: wrap;
         gap: 10px;
+      }
+      .flow-board {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .flow-stage {
+        display: grid;
+        gap: 10px;
+        align-items: stretch;
+      }
+      .flow-stage.top {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
+      .flow-stage.bottom {
+        grid-template-columns: 1.12fr auto 1fr auto 0.92fr;
+      }
+      .flow-node {
+        min-height: 86px;
+        border: 1px solid var(--slide-line);
+        padding: 12px 12px 10px;
+        background: rgba(255, 255, 255, 0.035);
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .flow-node.highlight {
+        min-height: 108px;
+        background: rgba(255, 255, 255, 0.055);
+        border-color: rgba(240, 236, 229, 0.24);
+      }
+      .flow-node .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .flow-node .name {
+        font-size: 16px;
+        line-height: 1.12;
+      }
+      .flow-node .copy {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .flow-link {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 16px;
+        color: var(--slide-muted);
+      }
+      .flow-drop {
+        display: flex;
+        justify-content: center;
+        font-family: var(--f-mono);
+        font-size: 16px;
+        letter-spacing: 0.16em;
+        color: var(--slide-muted);
+      }
+      .point-cloud {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        padding-top: 2px;
+      }
+      .point-chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 8px 10px;
+        border: 1px solid rgba(240, 236, 229, 0.14);
+        background: rgba(255, 255, 255, 0.03);
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--c-ink);
+      }
+      .flow-caption {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
       }
       .resource-flowchart {
         border-top: 1px solid var(--slide-line);
@@ -1082,24 +1224,59 @@
         line-height: 1.4;
         color: var(--slide-muted);
       }
-      .slide[data-title="资源位是什么"] .resource-node,
-      .slide[data-title="资源位是什么"] .point-card,
-      .slide[data-title="资源位是什么"] .return-card {
+      .feature-list {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .feature-row {
+        display: grid;
+        grid-template-columns: 58px 1fr;
+        gap: 12px;
+        padding: 14px 0;
+        border-top: 1px solid var(--slide-line);
+      }
+      .feature-row:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .feature-kicker {
+        font-family: var(--f-mono);
+        font-size: 12px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+        padding-top: 2px;
+      }
+      .feature-text {
+        font-size: 18px;
+        line-height: 1.1;
+        margin-bottom: 6px;
+      }
+      .feature-note {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .slide[data-title="资源位是什么"] .flow-node,
+      .slide[data-title="资源位是什么"] .point-chip,
+      .slide[data-title="资源位是什么"] .feature-row {
         background: rgba(255, 255, 255, 0.05);
         border-color: rgba(240, 236, 229, 0.18);
       }
-      .slide[data-title="资源位是什么"] .resource-node .idx,
-      .slide[data-title="资源位是什么"] .point-card .tag,
-      .slide[data-title="资源位是什么"] .return-card .head,
-      .slide[data-title="资源位是什么"] .point-head .sub,
-      .slide[data-title="资源位是什么"] .resource-arrow {
+      .slide[data-title="资源位是什么"] .flow-node .idx,
+      .slide[data-title="资源位是什么"] .flow-node .copy,
+      .slide[data-title="资源位是什么"] .flow-link,
+      .slide[data-title="资源位是什么"] .flow-drop,
+      .slide[data-title="资源位是什么"] .feature-kicker,
+      .slide[data-title="资源位是什么"] .feature-sub {
         color: rgba(240, 236, 229, 0.72);
       }
-      .slide[data-title="资源位是什么"] .resource-node .name,
-      .slide[data-title="资源位是什么"] .point-card .name,
-      .slide[data-title="资源位是什么"] .return-card .body,
-      .slide[data-title="资源位是什么"] .resource-quote,
-      .slide[data-title="资源位是什么"] .point-note {
+      .slide[data-title="资源位是什么"] .flow-node .name,
+      .slide[data-title="资源位是什么"] .flow-caption,
+      .slide[data-title="资源位是什么"] .feature-text,
+      .slide[data-title="资源位是什么"] .feature-note,
+      .slide[data-title="资源位是什么"] .resource-quote {
         color: var(--c-ink);
       }
       .resource-flow {
@@ -1321,6 +1498,133 @@
         line-height: 1.5;
         color: var(--slide-muted);
       }
+      .video-attachment {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-top: 12px;
+        flex-wrap: wrap;
+      }
+      .video-launch {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--slide-text);
+        padding: 12px 16px;
+        font-family: var(--f-body);
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .video-launch .ico {
+        font-family: var(--f-mono);
+        font-size: 13px;
+        letter-spacing: 0.14em;
+      }
+      .video-launch:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
+      .video-hint {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .video-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 2200;
+        display: grid;
+        place-items: center;
+        padding: 36px;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.22s ease;
+      }
+      .video-modal.open {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      .video-modal__backdrop {
+        position: absolute;
+        inset: 0;
+        background: rgba(6, 6, 6, 0.8);
+      }
+      .video-modal__panel {
+        position: relative;
+        z-index: 1;
+        width: min(1160px, calc(100vw - 72px));
+        background: #121211;
+        border: 1px solid rgba(240, 236, 229, 0.14);
+        box-shadow: 0 30px 80px rgba(0, 0, 0, 0.48);
+        overflow: hidden;
+      }
+      .video-modal__topbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(240, 236, 229, 0.1);
+      }
+      .video-modal__title {
+        font-size: 18px;
+        line-height: 1.1;
+      }
+      .video-modal__hint {
+        margin-top: 5px;
+        font-size: 13px;
+        line-height: 1.35;
+        color: var(--slide-muted);
+      }
+      .video-modal__close {
+        width: 36px;
+        height: 36px;
+        border: 1px solid rgba(240, 236, 229, 0.14);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--c-ink);
+        font-size: 18px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .video-modal__frame {
+        position: relative;
+        aspect-ratio: 16 / 9;
+        background: #000;
+      }
+      .video-modal__empty {
+        position: absolute;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        gap: 14px;
+        padding: 24px;
+        text-align: center;
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), rgba(255, 255, 255, 0.01));
+        color: var(--c-ink);
+      }
+      .video-modal__empty .copy {
+        max-width: 520px;
+        font-size: 18px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .video-modal__pick {
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--c-ink);
+        padding: 12px 16px;
+        font-size: 15px;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .video-modal video {
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #000;
+      }
       .resource-cell.emphasis {
         background: rgba(255, 255, 255, 0.04);
       }
@@ -1494,6 +1798,144 @@
       .compare .half.right .summary {
         border-top-color: rgba(17, 17, 17, 0.15);
       }
+      .process-compare {
+        display: grid;
+        grid-template-columns: 1fr 1fr 0.72fr;
+        gap: 18px;
+        align-items: start;
+      }
+      .process-side {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .process-side .head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .process-side .head .label {
+        font-family: var(--f-mono);
+        font-size: 14px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .process-side .head .sub {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+        max-width: 220px;
+        text-align: right;
+      }
+      .process-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .process-step {
+        display: grid;
+        grid-template-columns: 58px minmax(0, 1fr);
+        gap: 12px;
+        align-items: center;
+        padding: 12px 0;
+        border-top: 1px solid rgba(240, 236, 229, 0.12);
+      }
+      .process-step:first-child {
+        border-top: 0;
+        padding-top: 0;
+      }
+      .process-step .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .process-step .title {
+        font-size: 20px;
+        line-height: 1.08;
+      }
+      .process-step .desc {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+        margin-top: 6px;
+      }
+      .process-side.right .process-step {
+        border-top-color: rgba(17, 17, 17, 0.18);
+      }
+      .process-side.right .process-step .idx,
+      .process-side.right .head .label {
+        color: rgba(17, 17, 17, 0.72);
+      }
+      .process-side.right .process-step .title {
+        color: #111111;
+      }
+      .process-side.right .process-step .desc,
+      .process-side.right .head .sub {
+        color: rgba(17, 17, 17, 0.66);
+      }
+      .process-side.right {
+        background: var(--c-bg-orange);
+        color: #111111;
+        padding: 22px 22px 20px;
+        border-top: 0;
+        min-height: 100%;
+      }
+      .process-side.right .process-step {
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .impact-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+      }
+      .impact-card {
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 16px 18px 14px;
+        min-height: 112px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .impact-card.big {
+        min-height: 150px;
+      }
+      .impact-card .tag {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .impact-card .metric {
+        font-size: 48px;
+        line-height: 0.95;
+        font-weight: 800;
+      }
+      .impact-card .copy {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .impact-card .mini {
+        font-size: 20px;
+        line-height: 1.08;
+      }
+      .impact-note {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 12px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
 
       .loop {
         position: relative;
@@ -1634,6 +2076,528 @@
         display: grid;
         grid-template-columns: repeat(3, 1fr);
         gap: 18px;
+      }
+      .swimlane-board {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .handoff-flow {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 22px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .handoff-row {
+        display: grid;
+        grid-template-columns: 168px minmax(0, 1fr) 54px;
+        gap: 16px;
+        align-items: center;
+      }
+      .handoff-lane {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 92px;
+      }
+      .handoff-lane .role {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .handoff-lane .title {
+        font-size: 26px;
+        line-height: 1.04;
+      }
+      .handoff-lane .sub {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 146px;
+      }
+      .handoff-card {
+        min-height: 112px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 16px 18px 14px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .handoff-row.ai .handoff-card {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.2);
+      }
+      .handoff-row.review .handoff-card {
+        background: rgba(255, 255, 255, 0.02);
+        border-style: dashed;
+      }
+      .handoff-card .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .handoff-card .step {
+        margin-top: 12px;
+        font-size: 21px;
+        line-height: 1.08;
+      }
+      .handoff-card .desc {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 560px;
+      }
+      .handoff-arrow {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+        color: var(--slide-muted);
+      }
+      .handoff-arrow .line {
+        width: 1px;
+        height: 28px;
+        background: var(--slide-line);
+      }
+      .handoff-arrow .symbol {
+        font-family: var(--f-mono);
+        font-size: 20px;
+        line-height: 1;
+      }
+      .handoff-arrow .to {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+      }
+      .swimlane-map {
+        position: relative;
+        min-height: 612px;
+        margin-top: 6px;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 18px;
+      }
+      .swimlane-band-bg {
+        position: absolute;
+        top: 58px;
+        bottom: 18px;
+        border: 1px solid rgba(240, 236, 229, 0.08);
+        pointer-events: none;
+      }
+      .swimlane-band-bg.human {
+        left: 0;
+        width: 260px;
+        background: rgba(255, 255, 255, 0.015);
+      }
+      .swimlane-band-bg.ai {
+        left: 330px;
+        right: 0;
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.18);
+      }
+      .swimlane-header {
+        position: absolute;
+        top: 0;
+        width: 260px;
+        padding-top: 14px;
+        border-top: 1px solid var(--slide-line);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .swimlane-header.ai {
+        left: 330px;
+        width: 780px;
+      }
+      .swimlane-header .role {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .swimlane-header .title {
+        font-size: 24px;
+        line-height: 1.04;
+      }
+      .swimlane-header .sub {
+        font-size: 14px;
+        line-height: 1.42;
+        color: var(--slide-muted);
+        max-width: 210px;
+      }
+      .swimlane-header.ai .sub {
+        max-width: 320px;
+      }
+      .swimlane-card {
+        position: absolute;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 14px 16px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 92px;
+        overflow: hidden;
+      }
+      .swimlane-card.ai {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.22);
+      }
+      .swimlane-card.review {
+        background: rgba(255, 255, 255, 0.02);
+        border-style: dashed;
+      }
+      .swimlane-card .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .swimlane-card .step {
+        margin-top: 10px;
+        font-size: 20px;
+        line-height: 1.08;
+      }
+      .swimlane-card .desc {
+        margin-top: 8px;
+        font-size: 13px;
+        line-height: 1.44;
+        color: var(--slide-muted);
+      }
+      .swimlane-card.human {
+        left: 0;
+        width: 260px;
+      }
+      .swimlane-card.ai {
+        left: 330px;
+        width: 780px;
+      }
+      .swimlane-links {
+        position: absolute;
+        inset: 58px 0 18px 0;
+        width: 100%;
+        height: calc(100% - 76px);
+        pointer-events: none;
+      }
+      .swimlane-links path {
+        fill: none;
+        stroke: rgba(240, 236, 229, 0.5);
+        stroke-width: 2.2;
+      }
+      .swimlane-links path.review {
+        stroke-dasharray: 7 6;
+        stroke: rgba(240, 236, 229, 0.34);
+      }
+      .swimlane-links path.ai {
+        stroke: rgba(147, 98, 68, 0.7);
+      }
+      .swimlane-links .label {
+        font-family: var(--f-mono);
+        font-size: 10px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        fill: rgba(240, 236, 229, 0.7);
+      }
+      .swimlane-band {
+        display: grid;
+        grid-template-columns: 176px minmax(0, 1fr);
+        gap: 18px;
+        align-items: start;
+        padding-top: 14px;
+      }
+      .swimlane-tag {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        min-height: 116px;
+      }
+      .swimlane-tag .role {
+        font-family: var(--f-mono);
+        font-size: 12px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .swimlane-tag .title {
+        font-size: 28px;
+        line-height: 1.04;
+      }
+      .swimlane-tag .sub {
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+        max-width: 144px;
+      }
+      .swimlane-branch {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        padding-top: 1px;
+      }
+      .swimlane-track {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+      }
+      .swimlane-v2 {
+        display: grid;
+        grid-template-columns: 300px 86px minmax(0, 880px) 96px;
+        grid-template-areas:
+          "humanhead . aihead aihead"
+          "body body body body"
+          "foot foot foot foot";
+        gap: 18px 18px;
+        align-items: start;
+        margin-top: 6px;
+      }
+      .swimlane-v2-head {
+        border-top: 1px solid var(--slide-line);
+        padding-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        min-height: 120px;
+      }
+      .swimlane-v2-head.human {
+        grid-area: humanhead;
+      }
+      .swimlane-v2-head.ai {
+        grid-area: aihead;
+      }
+      .swimlane-v2-head .role {
+        font-family: var(--f-mono);
+        font-size: 34px;
+        line-height: 0.96;
+        font-weight: 800;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--c-orange);
+      }
+      .swimlane-v2-head .title {
+        font-size: 16px;
+        line-height: 1.15;
+        font-weight: 600;
+        color: var(--slide-text);
+      }
+      .swimlane-v2-head .sub {
+        font-size: 11px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+        max-width: 300px;
+      }
+      .swimlane-v2-head.ai .sub {
+        max-width: 380px;
+      }
+      .swimlane-v2-body {
+        grid-area: body;
+        display: grid;
+        grid-template-columns: 300px 86px minmax(0, 880px) 96px;
+        grid-template-rows: repeat(4, auto);
+        gap: 14px 18px;
+        align-items: center;
+      }
+      .swimlane-v2-card {
+        min-height: 112px;
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 18px 18px 16px;
+        display: grid;
+        grid-template-columns: 46px minmax(0, 1fr);
+        grid-template-rows: auto auto;
+        gap: 3px 12px;
+        align-items: start;
+      }
+      .swimlane-v2-card.human {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .swimlane-v2-card.ai {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.2);
+      }
+      .swimlane-v2-card.review {
+        border-style: dashed;
+      }
+      .swimlane-v2-card .idx {
+        grid-row: 1 / span 2;
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+        padding-top: 2px;
+      }
+      .swimlane-v2-card .step {
+        font-size: 22px;
+        line-height: 1.1;
+      }
+      .swimlane-v2-card .desc {
+        font-size: 14px;
+        line-height: 1.38;
+        color: var(--slide-muted);
+      }
+      .swimlane-v2-connector {
+        display: grid;
+        place-items: center;
+        color: var(--slide-muted);
+        font-family: var(--f-mono);
+        font-size: 44px;
+        line-height: 1;
+        min-height: 108px;
+      }
+      .swimlane-v2-connector::before {
+        content: "";
+        position: absolute;
+        width: 92px;
+        height: 1px;
+        background: var(--slide-line);
+        opacity: 0.9;
+      }
+      .swimlane-v2-connector {
+        position: relative;
+      }
+      .swimlane-v2-connector span {
+        position: relative;
+        z-index: 1;
+        padding: 0 8px;
+        background: var(--c-bg);
+      }
+      .swimlane-v2-connector.down {
+        color: rgba(240, 236, 229, 0.72);
+      }
+      .swimlane-v2-connector.down::before {
+        width: 1px;
+        height: 92px;
+      }
+      .swimlane-v2-connector.end {
+        color: rgba(240, 236, 229, 0.82);
+      }
+      .swimlane-v2-connector.end::before {
+        width: 102px;
+        height: 1px;
+      }
+      .swimlane-v2-foot {
+        grid-area: foot;
+        border-top: 1px solid var(--slide-line);
+        padding-top: 14px;
+        font-size: 15px;
+        line-height: 1.45;
+        color: var(--slide-muted);
+      }
+      .swimlane-node {
+        min-height: 120px;
+        border: 1px solid rgba(240, 236, 229, 0.16);
+        background: rgba(255, 255, 255, 0.03);
+        padding: 14px 16px 12px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .swimlane-band.ai .swimlane-node {
+        background: rgba(147, 98, 68, 0.08);
+        border-color: rgba(147, 98, 68, 0.2);
+      }
+      .swimlane-node.review {
+        min-height: 86px;
+        background: rgba(255, 255, 255, 0.02);
+        border-style: dashed;
+      }
+      .swimlane-node .idx {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--slide-muted);
+      }
+      .swimlane-node .step {
+        font-size: 17px;
+        line-height: 1.12;
+      }
+      .swimlane-node .desc {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .swimlane-connector {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 18px;
+        color: var(--slide-muted);
+      }
+      .swimlane-review-strip {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(240px, 0.72fr) minmax(0, 1fr);
+        gap: 12px;
+        align-items: stretch;
+      }
+      .swimlane-review-center {
+        border: 1px solid var(--slide-line);
+        background: rgba(255, 255, 255, 0.02);
+        padding: 14px 16px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        gap: 8px;
+        color: var(--slide-muted);
+        min-height: 86px;
+      }
+      .swimlane-review-center .role {
+        font-family: var(--f-mono);
+        font-size: 11px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--slide-accent);
+      }
+      .swimlane-review-center .title {
+        font-size: 16px;
+        line-height: 1.12;
+        color: var(--slide-text);
+      }
+      .swimlane-review-center .sub {
+        font-size: 13px;
+        line-height: 1.4;
+        color: var(--slide-muted);
+      }
+      .swimlane-jump {
+        display: grid;
+        grid-template-columns: 1fr 44px 1fr;
+        gap: 12px;
+        align-items: center;
+      }
+      .swimlane-jump .line {
+        height: 1px;
+        background: var(--slide-line);
+      }
+      .swimlane-jump .arrow {
+        display: grid;
+        place-items: center;
+        font-family: var(--f-mono);
+        font-size: 18px;
+        color: var(--slide-muted);
+      }
+      .swimlane-bottom-note {
+        margin-top: 12px;
+        padding-left: 0;
+        max-width: 960px;
+        font-size: 14px;
+        line-height: 1.45;
+        color: var(--slide-muted);
       }
 
       .before-after {
@@ -2432,120 +3396,50 @@
             <div class="resource-layout" style="padding-top: 18px;">
               <div class="resource-intro">
                 <div class="kicker" data-anim="fade-up">what</div>
-                <h2 class="h2" style="max-width: 860px; margin-top: 12px" data-anim="fade-up" data-delay="1">资源位配置不是一个动作，而是一条会反复回流的人工链路</h2>
-                <p class="body muted" style="max-width: 860px; margin-top: 16px" data-anim="fade-up" data-delay="2">我遇到的“表格时刻”，就是在干这个工作的时候。它不是一次性填表，而是上游、中台、后台之间来回串联，每一步都要把上一轮的内容再复制一遍。</p>
-                <div class="resource-tags" data-anim="fade-up" data-delay="3">
-                  <div class="chip">多方关联</div>
-                  <div class="chip">多系统</div>
-                  <div class="chip">多点位</div>
-                  <div class="chip">复制粘贴</div>
-                </div>
-                <div class="resource-flowchart" data-anim="fade-up" data-delay="4">
-                  <div class="flow-row">
-                    <div class="resource-node">
-                      <div class="idx">01</div>
+                <h2 class="h2" style="max-width: 900px; margin-top: 12px" data-anim="fade-up" data-delay="1">资源位配置不是一个动作，而是一条在几个主体之间反复往返的链路</h2>
+                <p class="body muted" style="max-width: 900px; margin-top: 16px" data-anim="fade-up" data-delay="2">上游给需求，中台排期；中台再回给上游，补物料；物料回到中台后，再复制到后台配置；后台审核走查后，再回到中台确认，最后才到用户。</p>
+                <div class="flow-board resource" data-anim="fade-up" data-delay="3">
+                  <div class="flow-stage top">
+                    <div class="flow-node">
+                      <div class="idx">01 / upstream</div>
                       <div class="name">上游提需求</div>
-                      <div class="copy">request</div>
+                      <div class="copy">先把要做什么、什么时候做说清楚。</div>
                     </div>
-                    <div class="resource-arrow">→</div>
-                    <div class="resource-node">
-                      <div class="idx">02</div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">02 / middle</div>
                       <div class="name">中台排期 / 计算 / 分配</div>
-                      <div class="copy">plan</div>
+                      <div class="copy">先把需求拆开，算资源，再排顺序。</div>
                     </div>
-                    <div class="resource-arrow">→</div>
-                    <div class="resource-node">
-                      <div class="idx">03</div>
-                      <div class="name">把结果回给上游</div>
-                      <div class="copy">reply</div>
-                    </div>
-                    <div class="resource-arrow">→</div>
-                    <div class="resource-node">
-                      <div class="idx">04</div>
-                      <div class="name">上游准备物料</div>
-                      <div class="copy">assets</div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">03 / upstream</div>
+                      <div class="name">回给上游并补物料</div>
+                      <div class="copy">排完以后，再回头通知业务方准备素材。</div>
                     </div>
                   </div>
-                  <div class="flow-row compact">
-                    <div class="resource-node">
-                      <div class="idx">05</div>
-                      <div class="name">中台多点位后台配置</div>
-                      <div class="copy">copy & paste</div>
+                  <div class="flow-drop">↓</div>
+                  <div class="flow-stage bottom">
+                    <div class="flow-node highlight">
+                      <div class="idx">04 / middle</div>
+                      <div class="name">中台复制到后台配置</div>
+                      <div class="copy">把同一套物料，一项项填进不同资源位。</div>
                     </div>
-                    <div class="resource-arrow">→</div>
-                    <div class="resource-node">
-                      <div class="idx">06</div>
-                      <div class="name">审核 / 走查 / 再确认</div>
-                      <div class="copy">check</div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">05 / backend</div>
+                      <div class="name">后台审核 / 走查 / 再确认</div>
+                      <div class="copy">确认没问题后，再回到中台继续推进。</div>
                     </div>
-                    <div class="resource-arrow">→</div>
-                    <div class="resource-node">
-                      <div class="idx">07</div>
-                      <div class="name">上线</div>
-                      <div class="copy">publish</div>
+                    <div class="flow-link">→</div>
+                    <div class="flow-node">
+                      <div class="idx">06 / user</div>
+                      <div class="name">上线给用户</div>
+                      <div class="copy">最后用户才看到真正的结果。</div>
                     </div>
-                  </div>
-                  <div class="flow-return-band">
-                    <div class="return-card">
-                      <div class="head">回流 1</div>
-                      <div class="body">如果排期不合适，就回到中台重新算；如果物料不对，就回到上游再补一轮。</div>
-                    </div>
-                    <div class="return-card">
-                      <div class="head">回流 2</div>
-                      <div class="body">如果审核没过，后台配置和物料都会再改一次，动作本身也就再复制一次。</div>
-                    </div>
-                  </div>
-                  <div class="resource-quote">它不是单线流程，而是一个会回头的协作循环。真正消耗人的，是一遍遍的复制、粘贴、回填、校对。</div>
-                </div>
-              </div>
-              <div class="point-cluster">
-                <div class="point-head" data-anim="fade-up" data-delay="1">
-                  <div class="title">点位家族</div>
-                  <div class="sub">同一套逻辑铺到多个位置</div>
-                </div>
-                <div class="point-grid" data-anim="fade-up" data-delay="2">
-                  <div class="point-card">
-                    <div class="tag">spot 01</div>
-                    <div class="name">首页 Banner</div>
-                    <div class="copy">同样的流程，换一个点位再来一次。</div>
-                  </div>
-                  <div class="point-card">
-                    <div class="tag">spot 02</div>
-                    <div class="name">Push</div>
-                    <div class="copy">同一套字段，不同后台里重复填。</div>
-                  </div>
-                  <div class="point-card">
-                    <div class="tag">spot 03</div>
-                    <div class="name">精准 Push</div>
-                    <div class="copy">复制、微调、再复制。</div>
-                  </div>
-                  <div class="point-card">
-                    <div class="tag">spot 04</div>
-                    <div class="name">开屏</div>
-                    <div class="copy">同一个动作，换了入口继续做。</div>
-                  </div>
-                  <div class="point-card">
-                    <div class="tag">spot 05</div>
-                    <div class="name">搜索词</div>
-                    <div class="copy">把同一规则再贴一遍。</div>
-                  </div>
-                  <div class="point-card">
-                    <div class="tag">spot 06</div>
-                    <div class="name">轮播词</div>
-                    <div class="copy">字段相近，流程相同。</div>
-                  </div>
-                  <div class="point-card">
-                    <div class="tag">spot 07</div>
-                    <div class="name">顶部 Tab</div>
-                    <div class="copy">只是换了位置，不是换了逻辑。</div>
-                  </div>
-                  <div class="point-card">
-                    <div class="tag">spot 08</div>
-                    <div class="name">更多点位</div>
-                    <div class="copy">越来越多的地方，越来越多次重复。</div>
                   </div>
                 </div>
-                <div class="point-note" data-anim="fade-up" data-delay="3">这就是为什么它看起来像“多做几次配置”，其实本质上是在做一件高度复制粘贴化的工作。</div>
+                <div class="resource-caption" data-anim="fade-up" data-delay="4">这件事的难点不在单次配置，而在来回回传、反复确认、再复制一遍。</div>
               </div>
             </div>
             <div class="foot">
@@ -2648,78 +3542,62 @@
             </div>
             <div class="pipeline-layout" style="padding-top: 18px;">
               <div class="kicker" data-anim="fade-up">how it works</div>
-              <h2 class="h2" style="max-width: 1080px; margin-top: 12px" data-anim="fade-up" data-delay="1">把业务规则翻译成自然语言，再让 AI 逐层接力</h2>
-              <div class="pipeline-board" data-anim="fade-up" data-delay="2">
-                <div class="pipeline-row">
-                  <div class="pipeline-step">
-                    <div class="idx">01 / human</div>
-                    <div class="step">梳理业务规则</div>
-                    <div class="desc">先把资源位的规则、边界、例外和目标写清楚。</div>
-                    <div class="role">human</div>
-                  </div>
-                  <div class="pipeline-step">
-                    <div class="idx">02 / human</div>
-                    <div class="step">写成自然语言</div>
-                    <div class="desc">把规则整理成 AI 能读懂的需求描述。</div>
-                    <div class="role">human</div>
-                  </div>
-                  <div class="pipeline-step">
-                    <div class="idx">03 / ai</div>
-                    <div class="step">生成 PRD / 技术文档</div>
-                    <div class="desc">AI 先产出可读的文档初稿，让方案有一个底。</div>
-                    <div class="role">ai</div>
-                  </div>
-                  <div class="pipeline-step">
-                    <div class="idx">04 / ai</div>
-                    <div class="step">交给另一模型 review</div>
-                    <div class="desc">交叉验证逻辑、遗漏和不合理的地方。</div>
-                    <div class="role">ai</div>
-                  </div>
+              <h2 class="h2" style="max-width: 1080px; margin-top: 12px" data-anim="fade-up" data-delay="1">人先把规则说清楚，再让 AI 接力把程序写出来</h2>
+              <div class="swimlane-v2" data-anim="fade-up" data-delay="2">
+                <div class="swimlane-v2-head human">
+                  <div class="role">HUMAN</div>
+                  <div class="title">定义问题</div>
+                  <div class="sub">先把业务规则和边界想清楚</div>
                 </div>
-                <div class="pipeline-row">
-                  <div class="pipeline-step">
-                    <div class="idx">05 / ai</div>
-                    <div class="step">Coding 模型开发</div>
-                    <div class="desc">确认文档没问题后，再让 AI 把代码写出来。</div>
-                    <div class="role">ai</div>
-                  </div>
-                  <div class="pipeline-step">
-                    <div class="idx">06 / human</div>
-                    <div class="step">人工测试</div>
-                    <div class="desc">人先看功能能不能跑、边界会不会崩。</div>
-                    <div class="role">human</div>
-                  </div>
-                  <div class="pipeline-step">
-                    <div class="idx">07 / ai</div>
-                    <div class="step">AI 代码 review</div>
-                    <div class="desc">测试卡住时，再让 AI 从代码层面找问题。</div>
-                    <div class="role">ai</div>
-                  </div>
-                  <div class="pipeline-step">
-                    <div class="idx">08 / human</div>
-                    <div class="step">验收上线</div>
-                    <div class="desc">最后由人确认结果，把它推到生产里去。</div>
-                    <div class="role">human</div>
-                  </div>
+                <div class="swimlane-v2-head ai">
+                  <div class="role">AI</div>
+                  <div class="title">理解与开发</div>
+                  <div class="sub">文档、review、coding 一步接一步</div>
                 </div>
-              </div>
-              <div class="pipeline-note">
-                <div class="panel inset" data-anim="fade-up" data-delay="3">
-                  <div class="panel-title">分工总结</div>
-                  <p class="big-line">人负责“定义问题 + 判断结果”，AI 负责“文档、开发和辅助 review”。</p>
-                </div>
-                <div class="panel inset" data-anim="fade-up" data-delay="4">
-                  <div class="panel-title">落地方法</div>
-                  <p class="big-line">先写清楚，再让它写出来；先审文档，再写代码；先测试，再验收。</p>
-                </div>
-                <div class="panel inset" data-anim="fade-up" data-delay="5">
-                  <div class="panel-title">核心直觉</div>
-                  <p class="big-line">不是“一步到位”，而是让人和 AI 在每个关口都各自负责最擅长的事。</p>
+                <div class="swimlane-v2-body">
+                  <article class="swimlane-v2-card human" style="grid-row: 1; grid-column: 1;">
+                    <div class="idx">01</div>
+                    <div class="step">梳理规则</div>
+                    <div class="desc">先把业务目标、边界和例外说清。</div>
+                  </article>
+                  <div class="swimlane-v2-connector" style="grid-row: 1; grid-column: 2;"><span>→</span></div>
+                  <article class="swimlane-v2-card ai" style="grid-row: 1; grid-column: 3;">
+                    <div class="idx">02</div>
+                    <div class="step">生成 PRD</div>
+                    <div class="desc">把自然语言方案翻成文档。</div>
+                  </article>
+                  <div class="swimlane-v2-connector down" style="grid-row: 1; grid-column: 4;"><span>↓</span></div>
+
+                  <article class="swimlane-v2-card ai review" style="grid-row: 2; grid-column: 3;">
+                    <div class="idx">03</div>
+                    <div class="step">AI review PRD</div>
+                    <div class="desc">先查逻辑和边界有没有问题。</div>
+                  </article>
+                  <div class="swimlane-v2-connector down" style="grid-row: 2; grid-column: 4;"><span>↓</span></div>
+
+                  <article class="swimlane-v2-card ai" style="grid-row: 3; grid-column: 3;">
+                    <div class="idx">04</div>
+                    <div class="step">Coding 开发</div>
+                    <div class="desc">按文档把程序写出来。</div>
+                  </article>
+                  <div class="swimlane-v2-connector down" style="grid-row: 3; grid-column: 4;"><span>↓</span></div>
+
+                  <article class="swimlane-v2-card human" style="grid-row: 4; grid-column: 1;">
+                    <div class="idx">06</div>
+                    <div class="step">人工验收</div>
+                    <div class="desc">确认结果没问题，再上线。</div>
+                  </article>
+                  <div class="swimlane-v2-connector end" style="grid-row: 4; grid-column: 2;"><span>←</span></div>
+                  <article class="swimlane-v2-card ai review" style="grid-row: 4; grid-column: 3;">
+                    <div class="idx">05</div>
+                    <div class="step">AI review 代码</div>
+                    <div class="desc">确认实现没问题，再交回人。</div>
+                  </article>
                 </div>
               </div>
             </div>
             <div class="foot">
-              <div class="muted">讲完原理就收，不要把时间压在代码上。</div>
+              <div class="muted">人负责定义问题和判断结果，AI 负责生成、开发和 review。</div>
               <div>闭环</div>
             </div>
           </div>
@@ -2757,6 +3635,13 @@
                   </div>
                 </div>
                 <div class="solution-side-note">这张表就是最终交付的入口：需求方填写，程序接手，人工最后审核上线。</div>
+                <div class="video-attachment" data-anim="fade-up" data-delay="3">
+                  <button class="video-launch" type="button" data-video-open data-video-title="Banner 配置演示视频" data-video-src="./assets/banner-config-demo.mp4">
+                    <span class="ico">▶</span>
+                    <span>视频附件</span>
+                  </button>
+                  <div class="video-hint">点击打开视频框，播放 Banner 配置自动化演示。</div>
+                </div>
               </div>
             </div>
             <div class="foot">
@@ -2781,26 +3666,125 @@
               <div>价值 / 原流程和现流程对比</div>
               <div class="page-number">11 / 17</div>
             </div>
-            <div class="compare" style="padding-top: 18px">
-              <div class="half left" data-anim="fade-up">
-                <div class="half-title">原流程</div>
-                <div class="main">提需求<br />反复沟通<br />排期分配<br />手动配置<br />审核走查<br />返工修正<br />上线</div>
-                <div class="line-list">
-                  <div class="line"><span class="arrow">→</span><span>中间有很多来回</span></div>
-                  <div class="line"><span class="arrow">→</span><span>每一步都要人盯着</span></div>
-                  <div class="line"><span class="arrow">→</span><span>出错后还要再跑一轮</span></div>
+            <div class="process-compare" style="padding-top: 18px">
+              <div class="process-side left" data-anim="fade-up">
+                <div class="head">
+                  <div class="label">原流程</div>
+                  <div class="sub">业务方和中台之间多走一轮，素材和配置都靠人搬运</div>
                 </div>
-                <div class="summary">需求方和中台之间，要先绕一圈，事情才会往前走。</div>
+                <div class="process-timeline">
+                  <div class="process-step">
+                    <div class="idx">01</div>
+                    <div>
+                      <div class="title">业务方提需求给中台</div>
+                      <div class="desc">先把要做什么发给中台。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">02</div>
+                    <div>
+                      <div class="title">中台排期并返回确认</div>
+                      <div class="desc">排完以后，再回给业务方确认。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">03</div>
+                    <div>
+                      <div class="title">业务方补物料 / 图片 / 链接</div>
+                      <div class="desc">业务方再把素材整理出来，重新传回去。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">04</div>
+                    <div>
+                      <div class="title">中台手动复制到后台配置</div>
+                      <div class="desc">中台把物料一项项复制粘贴到不同后台。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">05</div>
+                    <div>
+                      <div class="title">审核 / 走查 / 修正</div>
+                      <div class="desc">审核后发现问题，再返工修正。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">06</div>
+                    <div>
+                      <div class="title">上线给用户</div>
+                      <div class="desc">最后才真正到用户面前。</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="summary">原来最耗时的，是业务方和中台之间来回传素材、再由人手动搬到后台。</div>
               </div>
-              <div class="half right" data-anim="fade-up" data-delay="1">
-                <div class="half-title">现流程</div>
-                <div class="main">填表<br />自动配置<br />人工审核<br />直接上线</div>
-                <div class="line-list">
-                  <div class="line"><span class="arrow">→</span><span>一次输入，程序接手</span></div>
-                  <div class="line"><span class="arrow">→</span><span>规则提前被写进去</span></div>
-                  <div class="line"><span class="arrow">→</span><span>人只保留判断和确认</span></div>
+              <div class="process-side right" data-anim="fade-up" data-delay="1">
+                <div class="head">
+                  <div class="label">现流程</div>
+                  <div class="sub">业务方直接填表，程序自动配置，人工只保留最后审核</div>
                 </div>
-                <div class="summary">把“中介”压缩掉，链路就能直接闭环。</div>
+                <div class="process-timeline">
+                  <div class="process-step">
+                    <div class="idx">01</div>
+                    <div>
+                      <div class="title">业务方提需求给中台</div>
+                      <div class="desc">先把要做什么发给中台。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">02</div>
+                    <div>
+                      <div class="title">中台排期并返回确认</div>
+                      <div class="desc">排完以后，先把结果给业务方确认。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">03</div>
+                    <div>
+                      <div class="title">业务方直接填配置表格</div>
+                      <div class="desc">把素材、物料、图片链接直接放进表格。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">04</div>
+                    <div>
+                      <div class="title">程序自动配置 6 个点位</div>
+                      <div class="desc">程序把表格里的信息直接写进后台和资源位。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">05</div>
+                    <div>
+                      <div class="title">人工审核上线</div>
+                      <div class="desc">人只看结果，确认没问题再过审。</div>
+                    </div>
+                  </div>
+                  <div class="process-step">
+                    <div class="idx">06</div>
+                    <div>
+                      <div class="title">面向用户</div>
+                      <div class="desc">最后结果直接面向用户展示。</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="summary">中间那段人工搬运被压缩成了“填表 - 程序自动配置”这一段。</div>
+              </div>
+              <div class="impact-panel" data-anim="fade-up" data-delay="2">
+                <div class="impact-card big">
+                  <div class="tag">单流程提效</div>
+                  <div class="metric">50%</div>
+                  <div class="copy">原来人工在“传素材、复制、粘贴、再确认”上耗掉的工作量，直接省掉一半。</div>
+                </div>
+                <div class="impact-card">
+                  <div class="tag">复用范围</div>
+                  <div class="mini">6 个资源位点位</div>
+                  <div class="copy">同一套结构化表格，可以复用到更多重复性点位。</div>
+                </div>
+                <div class="impact-card">
+                  <div class="tag">稳定性</div>
+                  <div class="mini">出错率下降</div>
+                  <div class="copy">输入端只要准确，程序执行就是公式化、结构化的。</div>
+                </div>
               </div>
             </div>
             <div class="foot">
@@ -3079,6 +4063,22 @@
       <div class="body" id="notesBody"></div>
     </aside>
 
+    <div id="videoModal" class="video-modal" aria-hidden="true">
+      <div class="video-modal__backdrop" data-video-close></div>
+      <div class="video-modal__panel" role="dialog" aria-modal="true" aria-label="视频附件播放器">
+        <div class="video-modal__topbar">
+          <div>
+            <div class="video-modal__title" id="videoModalTitle">视频附件</div>
+            <div class="video-modal__hint" id="videoModalHint">点击播放按钮即可播放项目内视频。</div>
+          </div>
+          <button class="video-modal__close" type="button" data-video-close aria-label="关闭视频">×</button>
+        </div>
+        <div class="video-modal__frame">
+          <video id="videoPlayer" controls preload="metadata" playsinline></video>
+        </div>
+      </div>
+    </div>
+
     <script>
       class SlideDeck {
         constructor() {
@@ -3096,8 +4096,14 @@
           this.editToggle = document.getElementById("editToggle");
           this.notesToggle = document.getElementById("notesToggle");
           this.exportToggle = document.getElementById("exportToggle");
+          this.videoModal = document.getElementById("videoModal");
+          this.videoPlayer = document.getElementById("videoPlayer");
+          this.videoModalTitle = document.getElementById("videoModalTitle");
+          this.videoModalHint = document.getElementById("videoModalHint");
+          this.videoLaunchers = [...document.querySelectorAll("[data-video-open]")];
           this.editMode = false;
           this.notesMode = false;
+          this.defaultVideoSrc = "./assets/banner-config-demo.mp4";
           this.wheelLock = false;
           this.touchStart = null;
           this.buildNav();
@@ -3133,6 +4139,13 @@
 
         bindEvents() {
           window.addEventListener("keydown", (event) => {
+            if (this.videoModal.classList.contains("open")) {
+              if (event.key === "Escape") {
+                event.preventDefault();
+                this.closeVideoModal();
+              }
+              return;
+            }
             if (event.target && ["INPUT", "TEXTAREA"].includes(event.target.tagName)) {
               return;
             }
@@ -3200,6 +4213,19 @@
           this.editToggle.addEventListener("click", () => this.toggleEditMode());
           this.notesToggle.addEventListener("click", () => this.toggleNotes());
           this.exportToggle.addEventListener("click", () => this.exportHtml());
+          this.videoLaunchers.forEach((button) => {
+            button.addEventListener("click", () => {
+              this.openVideoModal(
+                button.dataset.videoSrc || this.defaultVideoSrc,
+                button.dataset.videoTitle || "视频附件"
+              );
+            });
+          });
+          this.videoModal.addEventListener("click", (event) => {
+            if (event.target?.dataset?.videoClose !== undefined || event.target === this.videoModal) {
+              this.closeVideoModal();
+            }
+          });
 
           this.slides.forEach((slide) => {
             slide.querySelectorAll("[data-editable='true']").forEach((node) => {
@@ -3258,6 +4284,27 @@
 
         toggleNotes() {
           this.setNotes(!this.notesMode);
+        }
+
+        setVideoSource(src) {
+          this.videoPlayer.src = src || this.defaultVideoSrc;
+          this.videoPlayer.load();
+        }
+
+        openVideoModal(src = "", title = "视频附件") {
+          this.videoModal.classList.add("open");
+          this.videoModal.setAttribute("aria-hidden", "false");
+          this.videoModalTitle.textContent = title;
+          this.videoModalHint.textContent = "视频已内置到项目资源里，点击播放按钮即可播放。";
+          this.setVideoSource(src || this.defaultVideoSrc);
+          this.videoPlayer.play().catch(() => {});
+        }
+
+        closeVideoModal() {
+          this.videoModal.classList.remove("open");
+          this.videoModal.setAttribute("aria-hidden", "true");
+          this.videoPlayer.pause();
+          this.videoPlayer.currentTime = 0;
         }
 
         showSlide(index, focus = true) {
